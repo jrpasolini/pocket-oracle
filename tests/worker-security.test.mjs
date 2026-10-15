@@ -20,10 +20,12 @@ const sandbox = {
   TextDecoder,
   btoa,
   atob,
-  Date: TestDate
+  Date: TestDate,
+  Response,
+  AbortSignal
 };
 
-runInNewContext(source + '\n;globalThis.testAPI = { validatePayload, validateReading, signNarration, authorizedNarrationText, narrationSecret, validateNarration, composeNarration };', sandbox);
+runInNewContext(source + '\n;globalThis.testAPI = { validatePayload, validateReading, signNarration, authorizedNarrationText, narrationSecret, validateNarration, composeNarration, narrate };', sandbox);
 const api = sandbox.testAPI;
 
 function payload() {
@@ -139,6 +141,35 @@ test('Portuguese three-card narration keeps Portuguese labels', async () => {
   assert.match(spoken.text, /Passado: O início/);
   assert.match(spoken.text, /Presente: O momento atual/);
   assert.match(spoken.text, /Futuro: O que vem depois/);
+});
+
+test('ElevenLabs receives signed locale as language_code without a paid call', async () => {
+  const key = 'test-only-signing-key-with-32-chars-or-more';
+  const previousFetch = sandbox.fetch;
+  const seen = [];
+  sandbox.fetch = async (_url, options) => {
+    seen.push(JSON.parse(options.body));
+    return new Response('fake-audio-for-test', { status: 200 });
+  };
+  try {
+    for (const idioma of ['en', 'pt']) {
+      const token = await api.signNarration(reading(), key, idioma);
+      const request = new Request('https://example.com/narrar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ narrationToken: token })
+      });
+      const response = await api.narrate(request, {
+        ELEVENLABS_API_KEY: 'test-only-not-real',
+        NARRATION_SIGNING_KEY: key
+      }, 'https://jrpasolini.github.io');
+      assert.equal(response.status, 200);
+    }
+    assert.deepEqual(seen.map(body => body.language_code), ['en', 'pt']);
+    assert.deepEqual(seen.map(body => body.model_id), ['eleven_v4', 'eleven_v4']);
+  } finally {
+    sandbox.fetch = previousFetch;
+  }
 });
 
 test('narration grant expires after ten minutes', async () => {
