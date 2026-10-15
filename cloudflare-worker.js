@@ -288,33 +288,54 @@ function extractReading(result) {
 // Valida a ESTRUTURA da leitura, não só a sintaxe do JSON.
 // Sem isto, um `{}` (ou um objeto com tipos errados) passa como válido e
 // impede indevidamente o fallback para o próximo modelo da cascata.
-function validateReading(reading, type) {
+function validateReading(reading, type, payload) {
   if (!reading || typeof reading !== 'object' || Array.isArray(reading)) {
     throw new Error('A leitura não é um objeto JSON.');
   }
-
-  for (const key of ['titulo', 'abertura', 'resposta', 'orientacao']) {
-    if (typeof reading[key] !== 'string' || !reading[key].trim()) {
-      throw new Error(`Campo obrigatório ausente ou vazio: ${key}.`);
+  const required = (value, field, limit) => {
+    if (typeof value !== 'string' || !value.trim() || value.length > limit) {
+      throw new Error(`Campo de leitura inválido: ${field}.`);
     }
-  }
+    return value.trim();
+  };
+  const keys = (item, allowed) => {
+    if (Object.keys(item).some(key => !allowed.includes(key))) {
+      throw new Error('A leitura contém campos inesperados.');
+    }
+  };
+  const common = ['titulo', 'abertura', 'resposta', 'orientacao'];
+  keys(reading, [...common, ...(type === 'tres_cartas' ? ['cartas', 'sintese'] : ['carta'])]);
+  reading.titulo = required(reading.titulo, 'titulo', 160);
+  reading.abertura = required(reading.abertura, 'abertura', 1600);
+  reading.resposta = required(reading.resposta, 'resposta', 2500);
+  reading.orientacao = required(reading.orientacao, 'orientacao', 1600);
 
   if (type === 'tres_cartas') {
     if (!Array.isArray(reading.cartas) || reading.cartas.length !== 3) {
-      throw new Error('A leitura de três cartas exige exatamente 3 itens em "cartas".');
+      throw new Error('A leitura exige exatamente três cartas.');
     }
     reading.cartas.forEach((item, index) => {
-      if (!item || typeof item !== 'object' || typeof item.interpretacao !== 'string' || !item.interpretacao.trim()) {
-        throw new Error(`A carta ${index + 1} da leitura está incompleta.`);
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        throw new Error('Item inválido na leitura de três cartas.');
       }
+      keys(item, ['posicao', 'carta', 'interpretacao']);
+      required(item.posicao, 'posicao', 100);
+      required(item.carta, 'carta', 180);
+      item.interpretacao = required(item.interpretacao, 'interpretacao', 3000);
+      // Rótulos vêm da tiragem efetiva; o modelo não deve inventá-los.
+      item.posicao = payload.cartas[index].posicao;
+      item.carta = payload.cartas[index].nome;
     });
-    if (typeof reading.sintese !== 'string' || !reading.sintese.trim()) {
-      throw new Error('Campo obrigatório ausente ou vazio: sintese.');
+    reading.sintese = required(reading.sintese, 'sintese', 2400);
+  } else {
+    if (!reading.carta || typeof reading.carta !== 'object' || Array.isArray(reading.carta)) {
+      throw new Error('A leitura exige uma carta válida.');
     }
-  } else if (!reading.carta || typeof reading.carta.interpretacao !== 'string' || !reading.carta.interpretacao.trim()) {
-    throw new Error('A leitura de uma carta está incompleta.');
+    keys(reading.carta, ['nome', 'interpretacao']);
+    required(reading.carta.nome, 'nome', 180);
+    reading.carta.interpretacao = required(reading.carta.interpretacao, 'interpretacao', 3000);
+    reading.carta.nome = payload.cartas[0].nome;
   }
-
   return reading;
 }
 
@@ -534,7 +555,7 @@ async function interpret(request, env, origin, debug = false) {
       const result = await ai.run(model.id, options);
       raw = result;
 
-      const interpretacao = validateReading(extractReading(result), payload.tipo);
+      const interpretacao = validateReading(extractReading(result), payload.tipo, payload);
       let narrationToken = null;
       const secret = narrationSecret(env);
       if (secret && env.ELEVENLABS_API_KEY) {
