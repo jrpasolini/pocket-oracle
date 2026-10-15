@@ -1,7 +1,7 @@
 {
-  "name": "Rider-Waite Tarot Almanac",
-  "short_name": "Tarot",
-  "description": "Rider-Waite Tarot — study, contemplation and intuitive draws",
+  "name": "Pocket Oracle — Rider-Waite Tarot",
+  "short_name": "Pocket Oracle",
+  "description": "A bilingual Rider-Waite Tarot grimoire with Gemma-powered readings and optional ElevenLabs narration",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1a120b",
