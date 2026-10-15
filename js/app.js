@@ -68,7 +68,7 @@
                 const label = wrapper.querySelector('.draw-card-label');
                 if (label) label.textContent = card.nome;
                 const flip = wrapper.querySelector('.card-flip');
-                if (flip) flip.setAttribute('aria-label', `Reveal ${card.nome}`);
+                if (flip) flip.setAttribute('aria-label', `${t('reveal_card')} ${card.nome}`);
                 const image = wrapper.querySelector('.card-face-front img');
                 if (image) image.alt = card.nome;
             });
@@ -332,7 +332,7 @@
             wrapper.className = 'shuffle-container draw-card-wrap flex flex-col items-center';
             wrapper.innerHTML = `
                 ${count === 3 ? `<div class="draw-position-label"><span>${index + 1}</span>${drawPositions()[index]}</div>` : ''}
-                <div class="card-flip cursor-pointer" role="button" tabindex="0" aria-label="Revelar ${escapeHtml(card.nome)}">
+                <div class="card-flip cursor-pointer" role="button" tabindex="0" aria-label="${escapeHtml(t('reveal_card'))} ${escapeHtml(card.nome)}">
                     <div class="card-face card-face-back"><div class="card-back-ornament" aria-hidden="true"><span class="card-back-moon">☾</span><span class="card-back-star">✦</span><span class="card-back-moon">☽</span></div></div>
                     <div class="card-face card-face-front"><img src="${escapeHtml(card.imagem)}" alt="${escapeHtml(card.nome)}" class="w-full h-full object-cover rounded-lg"></div>
                 </div>
