@@ -364,22 +364,8 @@
             tipo: currentDraw.length === 3 ? 'tres_cartas' : 'uma_carta',
             pergunta: questionInput.value.trim(),
             idioma: window.I18N ? I18N.lang : 'en',
-            cartas: currentDraw.map((card, index) => ({
-                posicao: currentDraw.length === 3 ? drawPositions()[index] : t('position_main'),
-                orientacao: 'normal',
-                nome: card.nome,
-                numero: card.numero,
-                naipe: card.naipe,
-                elemento: card.elemento,
-                signo: card.signo,
-                planeta: card.planeta,
-                descricao: card.descricao,
-                interpretacaoImagem: card.interpretacao_imagem,
-                palavrasChave: list(card.palavras_chave),
-                palavrasChaveInvertida: list(card.palavras_chave_invertido),
-                respostaRapida: card.resposta_rapida,
-                justificativaResposta: card.justificativa_resposta
-            }))
+            // O Worker recupera todos os significados e metadados de seu baralho canônico.
+            cartas: currentDraw.map(card => ({ nome: card.nome }))
         };
     }
 
