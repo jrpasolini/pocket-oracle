@@ -264,10 +264,12 @@
     }
 
     function cards() {
-        if (current === 'en' && Array.isArray(window.cardDatabaseEN) && window.cardDatabaseEN.length) {
-            return window.cardDatabaseEN;
+        // The deck scripts declare top-level const bindings, not window properties.
+        if (current === 'en' && typeof cardDatabaseEN !== 'undefined' &&
+            Array.isArray(cardDatabaseEN) && cardDatabaseEN.length) {
+            return cardDatabaseEN;
         }
-        return window.cardDatabase;
+        return typeof cardDatabase !== 'undefined' ? cardDatabase : [];
     }
 
     const listeners = [];
