@@ -50,7 +50,7 @@ test('rejects invalid card counts and empty questions', () => {
   assert.throws(() => api.validatePayload({ tipo: 'uma_carta', pergunta: '', cartas: [{ nome: 'The Fool' }] }));
 });
 
-test('untrusted card lore cannot overwrite canonical Gemini context', () => {
+test('untrusted card lore cannot overwrite canonical Gemma context', () => {
   const altered = api.validatePayload({
     tipo: 'uma_carta',
     idioma: 'en',
