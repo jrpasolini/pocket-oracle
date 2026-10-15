@@ -388,7 +388,7 @@ const DEFAULT_TTS_MODEL = 'eleven_v4';
 // Não é segredo: é escolha de produto (e o id da voz é público na API da ElevenLabs).
 const DEFAULT_VOICE_ID = 'RGymW84CSmfVugnA5tvA';
 
-function composeNarration(leitura = {}) {
+function composeNarration(leitura = {}, idioma = 'en') {
   const parts = [];
   const push = value => {
     if (typeof value === 'string' && value.trim()) parts.push(value.trim());
@@ -398,8 +398,12 @@ function composeNarration(leitura = {}) {
   push(leitura.abertura);
 
   if (Array.isArray(leitura.cartas)) {
-    for (const carta of leitura.cartas) {
-      push([carta?.posicao, carta?.interpretacao].filter(Boolean).join(': '));
+    // Positions are controlled by the reading language, never by model output.
+    const labels = idioma === 'pt'
+      ? ['Passado', 'Presente', 'Futuro']
+      : ['Past', 'Present', 'Future'];
+    for (const [index, carta] of leitura.cartas.entries()) {
+      push([labels[index], carta?.interpretacao].filter(Boolean).join(': '));
     }
   } else if (leitura.carta?.interpretacao) {
     push([leitura.carta?.nome, leitura.carta.interpretacao].filter(Boolean).join(': '));
@@ -435,11 +439,13 @@ async function narrationKey(secret) {
   return crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
 }
 
-async function signNarration(reading, secret) {
-  const text = composeNarration(reading);
+async function signNarration(reading, secret, idioma = 'en') {
+  const language = idioma === 'pt' ? 'pt' : 'en';
+  const text = composeNarration(reading, language);
   if (!text) return null;
   const payload = toB64Url(new TextEncoder().encode(JSON.stringify({
     text,
+    idioma: language,
     expiresAt: Date.now() + NARRATION_TOKEN_TTL_MS
   })));
   const signature = await crypto.subtle.sign('HMAC', await narrationKey(secret), new TextEncoder().encode(payload));
@@ -457,14 +463,15 @@ async function authorizedNarrationText(token, secret) {
       fromB64Url(signature), new TextEncoder().encode(payload));
     if (!valid) throw new Error('Invalid signature');
     const claims = JSON.parse(new TextDecoder().decode(fromB64Url(payload)));
-    if (typeof claims.text !== 'string' || !claims.text.trim() ||
+    if (!['pt', 'en'].includes(claims.idioma) ||
+        typeof claims.text !== 'string' || !claims.text.trim() ||
         claims.text.length > NARRATION_MAX_CHARS ||
         !Number.isFinite(claims.expiresAt) ||
         claims.expiresAt < Date.now() ||
         claims.expiresAt > Date.now() + NARRATION_TOKEN_TTL_MS) {
       throw new Error('Invalid claims');
     }
-    return claims.text;
+    return { text: claims.text, idioma: claims.idioma };
   } catch {
     throw new RequestError('A autorização de narração expirou ou é inválida.', 401);
   }
@@ -486,7 +493,7 @@ async function narrate(request, env, origin) {
   }
 
   const voiceId = env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
-  const text = await authorizedNarrationText(validateNarration(await parseRequestBody(request)), secret);
+  const { text, idioma } = await authorizedNarrationText(validateNarration(await parseRequestBody(request)), secret);
 
   const upstream = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`,
@@ -496,6 +503,7 @@ async function narrate(request, env, origin) {
       signal: AbortSignal.timeout(25_000),
       body: JSON.stringify({
         text,
+        language_code: idioma,
         model_id: env.ELEVENLABS_MODEL_ID || DEFAULT_TTS_MODEL,
         voice_settings: { stability: 0.4, similarity_boost: 0.85 }
       })
@@ -554,7 +562,7 @@ async function interpret(request, env, origin, debug = false) {
       let narrationToken = null;
       const secret = narrationSecret(env);
       if (secret && env.ELEVENLABS_API_KEY) {
-        try { narrationToken = await signNarration(interpretacao, secret); }
+        try { narrationToken = await signNarration(interpretacao, secret, payload.idioma); }
         catch { console.error('Não foi possível autorizar a narração.'); }
       }
       return json({
