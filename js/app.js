@@ -224,14 +224,14 @@
         document.getElementById('return-draw-button').classList.toggle('hidden', !fromDraw);
 
         const response = card.resposta_rapida
-            ? `<li><strong>❓ Resposta rápida:</strong> <strong>${escapeHtml(card.resposta_rapida)}</strong>${card.justificativa_resposta ? ` — <em>${escapeHtml(card.justificativa_resposta)}</em>` : ''}</li><hr class="border-current/20 my-2">`
+            ? `<li><strong>❓ ${t('detail_quick_answer')}:</strong> <strong>${escapeHtml(card.resposta_rapida)}</strong>${card.justificativa_resposta ? ` — <em>${escapeHtml(card.justificativa_resposta)}</em>` : ''}</li><hr class="border-current/20 my-2">`
             : '';
 
         document.getElementById('card-detail-content').innerHTML = `
             <div class="md:col-span-1 flex flex-col items-center gap-5">
                 <div class="detail-image-card"><img src="${escapeHtml(card.imagem)}" alt="${escapeHtml(card.nome)}" class="shadow-2xl"></div>
                 <div class="w-full max-w-sm correspondence-panel p-5 rounded-[1.4rem]">
-                    <h3 class="font-playfair text-2xl mb-4 text-center">Correspondências</h3>
+                    <h3 class="font-playfair text-2xl mb-4 text-center">${t('detail_correspondences')}</h3>
                     <ul class="space-y-2 text-sm md:text-base">
                         ${response}
                         <li><strong>🔥 Elemento:</strong> ${escapeHtml(card.elemento)}</li>

@@ -100,6 +100,8 @@
             no_cards: 'No card found.',
             detail_keywords: 'Keywords',
             detail_reversed: 'When reversed',
+            detail_quick_answer: 'Quick answer',
+            detail_correspondences: 'Correspondences',
             shuffling: 'Shuffling…'
         },
         pt: {
@@ -193,6 +195,8 @@
             no_cards: 'Nenhuma carta encontrada.',
             detail_keywords: 'Palavras-chave',
             detail_reversed: 'Quando invertida',
+            detail_quick_answer: 'Resposta rápida',
+            detail_correspondences: 'Correspondências',
             shuffling: 'Embaralhando…'
         }
     };
