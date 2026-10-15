@@ -31,6 +31,8 @@
     const NARRATE_ENDPOINT = 'https://tarot-rider-waite-ai.antonio-pasolini.workers.dev/narrar';
     let lastReading = null;
     let narrationInFlight = false;
+    let readingRequestController = null;
+    let readingRequestId = 0;
     const drawPositions = () => [t('position_past'), t('position_present'), t('position_future')];
 
     const propertyMap = {
@@ -329,6 +331,10 @@
     }
 
     function clearAiReading() {
+        readingRequestId += 1;
+        if (readingRequestController) readingRequestController.abort();
+        readingRequestController = null;
+        lastReading = null;
         aiReadingLoading.classList.add('hidden');
         aiReadingContent.innerHTML = '';
         aiReadingResult.classList.add('hidden');
@@ -561,6 +567,8 @@
         aiReadingContent.innerHTML = '';
 
         const controller = new AbortController();
+        const requestId = ++readingRequestId;
+        readingRequestController = controller;
         const timeoutId = window.setTimeout(() => controller.abort(), 45000);
 
         try {
@@ -571,6 +579,7 @@
                 signal: controller.signal
             });
             const data = await response.json().catch(() => null);
+            if (requestId !== readingRequestId) return;
 
             if (!response.ok || !data?.ok) {
                 throw new Error(data?.details || data?.error || t('error_failed'));
@@ -579,6 +588,7 @@
             aiReadingLoading.classList.add('hidden');
             renderAiReading(data);
         } catch (error) {
+            if (requestId !== readingRequestId) return;
             aiReadingLoading.classList.add('hidden');
             aiReadingContent.innerHTML = '';
             const message = error.name === 'AbortError'
@@ -590,10 +600,13 @@
             console.error('Falha na interpretação com IA:', error);
         } finally {
             window.clearTimeout(timeoutId);
-            aiRequestInFlight = false;
-            interpretAiButton.classList.remove('is-loading');
-            interpretAiButton.innerHTML = `<span aria-hidden="true">✦</span> ${t('interpret_btn')}`;
-            updateAiAvailability();
+            if (requestId === readingRequestId) {
+                readingRequestController = null;
+                aiRequestInFlight = false;
+                interpretAiButton.classList.remove('is-loading');
+                interpretAiButton.innerHTML = `<span aria-hidden="true">✦</span> ${t('interpret_btn')}`;
+                updateAiAvailability();
+            }
         }
     }
 
