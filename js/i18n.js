@@ -41,6 +41,8 @@
             question_note: 'The question is only sent when you ask for the AI interpretation.',
 
             draw_one: 'Draw one card',
+            draw_one_new: 'Draw another card',
+            reveal_card: 'Reveal',
             draw_three: 'Draw three cards',
             draw_three_new: 'New three-card draw',
             draw_hint: 'Tap a revealed card to see its details. For a reading of the whole spread, use the AI interpretation.',
@@ -141,6 +143,8 @@
             question_note: 'A pergunta só é enviada quando você pede a interpretação com IA.',
 
             draw_one: 'Tirar uma carta',
+            draw_one_new: 'Tirar outra carta',
+            reveal_card: 'Revelar',
             draw_three: 'Tirar três cartas',
             draw_three_new: 'Nova tiragem de três cartas',
             draw_hint: 'Clique em uma carta revelada para consultar seus detalhes. Se quiser uma leitura conjunta, use a interpretação com IA.',
