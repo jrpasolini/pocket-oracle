@@ -1,5 +1,5 @@
 const SERVICE = 'tarot-rider-waite-ai';
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const MAX_BODY_LENGTH = 50_000;
 
 // Cascata de modelos, em ordem de preferência.
@@ -9,8 +9,17 @@ const MAX_BODY_LENGTH = 50_000;
 //                     e validamos na saída; se falhar, caímos para o próximo.
 // Docs: https://developers.cloudflare.com/workers-ai/features/json-mode/
 const MODEL_CHAIN = [
-  { id: '@cf/google/gemma-4-26b-a4b-it', jsonMode: false },
-  { id: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', jsonMode: true }
+  {
+    id: '@cf/google/gemma-4-26b-a4b-it',
+    jsonMode: false,
+    maxTokensParam: 'max_completion_tokens'
+  },
+  {
+    id: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+    jsonMode: true,
+    maxTokensParam: 'max_tokens',
+    repetitionPenalty: 1.08
+  }
 ];
 const MODEL = MODEL_CHAIN[MODEL_CHAIN.length - 1].id;
 
@@ -244,7 +253,7 @@ async function parseRequestBody(request) {
   }
 }
 
-async function interpret(request, env, origin) {
+async function interpret(request, env, origin, debug = false) {
   if (!request.headers.get('content-type')?.toLowerCase().includes('application/json')) {
     throw new RequestError('Envie a requisição como application/json.', 415);
   }
@@ -260,22 +269,25 @@ async function interpret(request, env, origin) {
 
   for (const model of MODEL_CHAIN) {
     try {
-      const result = await ai.run(model.id, {
+      const options = {
         messages: buildMessages(payload, model),
-        ...(model.jsonMode
-          ? { response_format: { type: 'json_schema', json_schema: readingSchema(payload.tipo) } }
-          : {}),
-        max_tokens: payload.tipo === 'tres_cartas' ? 1_300 : 850,
+        [model.maxTokensParam || 'max_tokens']: payload.tipo === 'tres_cartas' ? 1_300 : 850,
         temperature: 0.55,
-        top_p: 0.9,
-        repetition_penalty: 1.08
-      });
+        top_p: 0.9
+      };
+      if (model.repetitionPenalty) options.repetition_penalty = model.repetitionPenalty;
+      if (model.jsonMode) {
+        options.response_format = { type: 'json_schema', json_schema: readingSchema(payload.tipo) };
+      }
+
+      const result = await ai.run(model.id, options);
 
       const interpretacao = extractReading(result);
       return json({
         ok: true,
         model: model.id,
         fallbacksUsed: failures.length,
+        ...(debug ? { debug: { chain: MODEL_CHAIN.map(entry => entry.id), failures } } : {}),
         tipo: payload.tipo,
         pergunta: payload.pergunta,
         interpretacao,
@@ -302,6 +314,7 @@ export default {
     }
 
     const url = new URL(request.url);
+    const debug = url.searchParams.get('debug') === '1' || request.headers.get('x-debug') === '1';
 
     if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) {
       return json({
@@ -320,7 +333,7 @@ export default {
     }
 
     try {
-      return await interpret(request, env, origin);
+      return await interpret(request, env, origin, debug);
     } catch (error) {
       const status = error instanceof RequestError ? error.status : 502;
       const details = error instanceof RequestError
