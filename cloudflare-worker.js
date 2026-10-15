@@ -433,7 +433,7 @@ async function narrate(request, env, origin) {
       body: JSON.stringify({
         text,
         model_id: env.ELEVENLABS_MODEL_ID || DEFAULT_TTS_MODEL,
-        voice_settings: { stability: 0.4, similarity_boost: 0.85, style: 0.35, use_speaker_boost: true }
+        voice_settings: { stability: 0.4, similarity_boost: 0.85 }
       })
     }
   );
