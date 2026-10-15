@@ -1,4 +1,5 @@
-const CACHE_NAME = 'pocket-oracle-v6-bilingual';
+const CACHE_PREFIX = 'pocket-oracle-';
+const CACHE_NAME = 'pocket-oracle-v9-voice-locales-20261015';
 
 const CORE_ASSETS = [
   './',
@@ -110,7 +111,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+      Promise.all(keys.filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME).map((key) => caches.delete(key)))
     )
   );
   self.clients.claim();
@@ -118,6 +119,8 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  // A PWA não deve armazenar recursos de APIs ou domínios terceiros.
+  if (new URL(request.url).origin !== self.location.origin) return;
 
   // Requisições que alteram dados sempre passam pela rede.
   if (request.method !== 'GET') {
@@ -130,8 +133,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          if (response.ok) {
+            const copy = response.clone();
+            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)));
+          }
           return response;
         })
         .catch(() => caches.match('./index.html'))
