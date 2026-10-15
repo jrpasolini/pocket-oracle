@@ -1,5 +1,5 @@
 const SERVICE = 'tarot-rider-waite-ai';
-const VERSION = '1.4.0';
+const VERSION = '1.5.0';
 const MAX_BODY_LENGTH = 50_000;
 
 // Cascata de modelos, em ordem de preferência.
@@ -67,6 +67,24 @@ function json(data, status, origin) {
     status,
     headers: responseHeaders(origin)
   });
+}
+
+function corsHeaders(origin, contentType) {
+  const headers = {
+    'Content-Type': contentType,
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin',
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'no-store'
+  };
+
+  if (origin && isAllowedOrigin(origin)) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
+
+  return headers;
 }
 
 function requiredText(value, field, maxLength) {
@@ -282,6 +300,91 @@ async function parseRequestBody(request) {
   }
 }
 
+// --- Narração (ElevenLabs) ---------------------------------------------------
+// A chave NUNCA vai para o navegador: ela vive como secret do Worker
+// (`ELEVENLABS_API_KEY`). Voz e modelo entram por env.
+const NARRATION_MAX_CHARS = 5_000;
+const DEFAULT_TTS_MODEL = 'eleven_v4';
+
+function composeNarration(leitura = {}) {
+  const parts = [];
+  const push = value => {
+    if (typeof value === 'string' && value.trim()) parts.push(value.trim());
+  };
+
+  push(leitura.titulo);
+  push(leitura.abertura);
+
+  if (Array.isArray(leitura.cartas)) {
+    for (const carta of leitura.cartas) {
+      push([carta?.posicao, carta?.interpretacao].filter(Boolean).join(': '));
+    }
+  } else if (leitura.carta?.interpretacao) {
+    push([leitura.carta?.nome, leitura.carta.interpretacao].filter(Boolean).join(': '));
+  }
+
+  push(leitura.sintese);
+  push(leitura.resposta);
+  push(leitura.orientacao);
+
+  return parts.join('\n\n').slice(0, NARRATION_MAX_CHARS);
+}
+
+function validateNarration(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new RequestError('O corpo da requisição é inválido.');
+  }
+
+  const texto = optionalText(body.texto, NARRATION_MAX_CHARS);
+  const leitura = body.leitura && typeof body.leitura === 'object' ? body.leitura : null;
+
+  if (!texto && !leitura) {
+    throw new RequestError('Envie `leitura` ou `texto` para a narração.');
+  }
+
+  return { texto, leitura };
+}
+
+async function narrate(request, env, origin) {
+  const apiKey = env.ELEVENLABS_API_KEY;
+  if (!apiKey) {
+    throw new RequestError('A narração não está configurada (falta ELEVENLABS_API_KEY).', 503);
+  }
+
+  const voiceId = env.ELEVENLABS_VOICE_ID;
+  if (!voiceId) {
+    throw new RequestError('A narração não está configurada (falta ELEVENLABS_VOICE_ID).', 503);
+  }
+
+  const payload = validateNarration(await parseRequestBody(request));
+  const text = (payload.texto || composeNarration(payload.leitura)).trim();
+  if (!text) throw new RequestError('Não há texto para narrar.');
+
+  const upstream = await fetch(
+    `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`,
+    {
+      method: 'POST',
+      headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
+      body: JSON.stringify({
+        text,
+        model_id: env.ELEVENLABS_MODEL_ID || DEFAULT_TTS_MODEL,
+        voice_settings: { stability: 0.4, similarity_boost: 0.85, style: 0.35, use_speaker_boost: true }
+      })
+    }
+  );
+
+  if (!upstream.ok) {
+    const detail = await upstream.text().catch(() => '');
+    console.error('ElevenLabs falhou:', upstream.status, detail.slice(0, 300));
+    throw new RequestError('Não foi possível gerar a narração agora.', 502);
+  }
+
+  return new Response(upstream.body, {
+    status: 200,
+    headers: corsHeaders(origin, 'audio/mpeg')
+  });
+}
+
 async function interpret(request, env, origin, debug = false) {
   if (!request.headers.get('content-type')?.toLowerCase().includes('application/json')) {
     throw new RequestError('Envie a requisição como application/json.', 415);
@@ -358,16 +461,20 @@ export default {
         version: VERSION,
         model: MODEL,
         modelChain: MODEL_CHAIN.map(entry => entry.id),
+        narration: Boolean(env.ELEVENLABS_API_KEY),
         status: 'online',
-        endpoints: { health: 'GET /health', interpretar: 'POST /interpretar' }
+        endpoints: { health: 'GET /health', interpretar: 'POST /interpretar', narrar: 'POST /narrar' }
       }, 200, origin);
     }
 
-    if (request.method !== 'POST' || url.pathname !== '/interpretar') {
+    if (request.method !== 'POST' || (url.pathname !== '/interpretar' && url.pathname !== '/narrar')) {
       return json({ ok: false, error: 'Endpoint não encontrado.' }, 404, origin);
     }
 
     try {
+      if (url.pathname === '/narrar') {
+        return await narrate(request, env, origin);
+      }
       return await interpret(request, env, origin, debug);
     } catch (error) {
       const status = error instanceof RequestError ? error.status : 502;
