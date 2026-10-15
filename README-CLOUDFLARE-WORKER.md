@@ -51,3 +51,23 @@ endpoints pagos; ainda é necessário configurar limites globais de requisiçõe
 proteção contra automação, alertas de consumo e limites de orçamento na
 Cloudflare e na ElevenLabs. O limitador atual em memória do Worker é apenas
 uma barreira secundária. Não considere CORS uma forma de autenticação.
+
+## Idioma da narração (PT/EN)
+
+O idioma da leitura é fixado quando o usuário solicita a interpretação:
+`idioma: "pt"` ou `idioma: "en"`. O Worker inclui esse valor no token
+assinado de narração, padroniza as posições da tiragem de três cartas
+(`Passado/Presente/Futuro` ou `Past/Present/Future`) e envia
+`language_code` correspondente para a ElevenLabs. O cliente não pode
+alterar o idioma apenas manipulando a chamada `/narrar`.
+
+Ao alternar o idioma do site, a leitura e o áudio antigos são invalidados,
+mas as cartas sorteadas permanecem. É necessário solicitar uma **nova**
+interpretação para ouvir a leitura no novo idioma; isso pode gerar uma
+nova chamada cobrada ao serviço de IA. A PWA também recebeu uma nova
+versão do cache, para atualizar os scripts bilíngues instalados.
+
+A configuração do idioma orienta a narração, mas não traduz
+automaticamente frases que um modelo eventualmente produza no idioma
+errado. Confira uma tiragem de três cartas em cada idioma no ambiente
+publicado antes de submeter o projeto.
