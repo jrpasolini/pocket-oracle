@@ -1,7 +1,14 @@
 (() => {
     'use strict';
 
-    const cards = cardDatabase.map((card, id) => ({ ...card, id }));
+    function buildDeck() {
+        const source = window.I18N ? I18N.cards() : cardDatabase;
+        return (Array.isArray(source) && source.length ? source : cardDatabase).map((card, id) => ({ ...card, id }));
+    }
+
+    let cards = buildDeck();
+
+    const t = key => (window.I18N ? I18N.t(key) : key);
     const cardGrid = document.getElementById('card-grid');
     const searchInput = document.getElementById('search-input');
     const filterInfo = document.getElementById('filter-info');
@@ -27,11 +34,21 @@
     const threeCardPositions = ['Passado', 'Presente', 'Futuro'];
 
     const propertyMap = {
-        naipe: 'Naipe',
-        elemento: 'Elemento',
-        signo: 'Signo',
-        planeta: 'Planeta'
+        naipe: 'prop_naipe',
+        elemento: 'prop_elemento',
+        signo: 'prop_signo',
+        planeta: 'prop_planeta'
     };
+
+    const propertyLabel = property => t(propertyMap[property] || property);
+
+    if (window.I18N) {
+        I18N.onChange(() => {
+            cards = buildDeck();
+            renderCards();
+            populateExploreMenu();
+        });
+    }
 
     let currentFilter = { type: null, value: null };
     let currentDetailFromDraw = false;
@@ -56,7 +73,7 @@
 
     function cardNumber(card) {
         if (card.naipe === 'Arcanos Maiores') return String(card.numero).padStart(2, '0');
-        const labels = { 1: 'Ás', 11: 'Pajem', 12: 'Cavaleiro', 13: 'Rainha', 14: 'Rei' };
+        const labels = { 1: t('rank_ace'), 11: t('rank_page'), 12: t('rank_knight'), 13: t('rank_queen'), 14: t('rank_king') };
         return labels[card.numero] || card.numero;
     }
 
@@ -77,12 +94,12 @@
         const content = exploreMenu.firstElementChild;
         content.innerHTML = '';
 
-        Object.entries(propertyMap).forEach(([property, label]) => {
+        Object.entries(propertyMap).forEach(([property, labelKey]) => {
             const values = [...new Set(cards.map(card => card[property]).filter(Boolean))]
                 .sort((a, b) => a.localeCompare(b, 'pt-BR'));
             const heading = document.createElement('p');
             heading.className = 'px-4 py-2 text-sm font-bold text-amber-700';
-            heading.textContent = label;
+            heading.textContent = t(labelKey);
             content.appendChild(heading);
 
             values.forEach(value => {
@@ -108,7 +125,7 @@
         const clear = document.createElement('button');
         clear.type = 'button';
         clear.className = 'w-full text-left text-red-700 block px-4 py-2 text-sm font-bold hover:bg-red-100';
-        clear.textContent = 'Limpar filtro';
+        clear.textContent = t('clear_filter');
         clear.addEventListener('click', () => {
             currentFilter = { type: null, value: null };
             searchInput.value = '';
@@ -130,11 +147,11 @@
         if (term) {
             currentFilter = { type: null, value: null };
             visible = cards.filter(card => searchableText(card).includes(term));
-            filterInfo.textContent = `Resultados para “${searchInput.value.trim()}”`;
+            filterInfo.textContent = `${t('filter_results')} “${searchInput.value.trim()}”`;
             filterInfo.classList.remove('hidden');
         } else if (currentFilter.type && currentFilter.value) {
             visible = cards.filter(card => card[currentFilter.type] === currentFilter.value);
-            filterInfo.textContent = `${propertyMap[currentFilter.type]}: ${currentFilter.value}`;
+            filterInfo.textContent = `${propertyLabel(currentFilter.type)}: ${currentFilter.value}`;
             filterInfo.classList.remove('hidden');
         } else {
             filterInfo.classList.add('hidden');
@@ -144,7 +161,7 @@
         cardGrid.innerHTML = '';
 
         if (!visible.length) {
-            cardGrid.innerHTML = '<p class="col-span-full text-center text-xl text-amber-800">Nenhuma carta encontrada.</p>';
+            cardGrid.innerHTML = `<p class="col-span-full text-center text-xl text-amber-800">${t('no_cards')}</p>`;
             return;
         }
 
@@ -229,15 +246,15 @@
                     <div class="flex flex-wrap items-center gap-3 mb-3"><span class="element-pill element-${cls}">${escapeHtml(card.elemento)}</span><span class="text-sm opacity-75">${escapeHtml(card.naipe)} • ${escapeHtml(cardNumber(card))}</span></div>
                     <h2 class="font-playfair text-4xl md:text-5xl leading-tight">${escapeHtml(card.nome)}</h2>
                 </div>
-                ${detailSection('Palavras-chave', `<p class="italic">${joinList(card.palavras_chave)}.</p>`)}
-                ${detailSection('Quando invertida', `<p class="italic">${joinList(card.palavras_chave_invertido)}.</p>`)}
-                ${detailSection('Essência e significados', `<p class="whitespace-pre-wrap">${escapeHtml(card.descricao)}</p>`)}
-                ${detailSection('Interpretação da imagem', `<p class="whitespace-pre-wrap">${escapeHtml(card.interpretacao_imagem)}</p>`)}
-                ${detailSection('Afinidades mágicas', `
+                ${detailSection(t('detail_keywords'), `<p class="italic">${joinList(card.palavras_chave)}.</p>`)}
+                ${detailSection(t('detail_reversed'), `<p class="italic">${joinList(card.palavras_chave_invertido)}.</p>`)}
+                ${detailSection(t('detail_essence'), `<p class="whitespace-pre-wrap">${escapeHtml(card.descricao)}</p>`)}
+                ${detailSection(t('detail_image'), `<p class="whitespace-pre-wrap">${escapeHtml(card.interpretacao_imagem)}</p>`)}
+                ${detailSection(t('detail_magical'), `
                     ${list(card.cristais).length ? `<p><strong>💎 Cristais:</strong> ${joinList(card.cristais)}.</p>` : ''}
                     ${list(card.ervas).length ? `<p><strong>🌿 Ervas:</strong> ${joinList(card.ervas)}.</p>` : ''}
                     ${list(card.aromaterapia).length ? `<p><strong>🌸 Aromaterapia:</strong> ${joinList(card.aromaterapia)}.</p>` : ''}`)}
-                ${detailSection('Referências cabalísticas', `<p class="whitespace-pre-wrap">${escapeHtml(card.referencias_cabalisticas)}</p>`)}
+                ${detailSection(t('detail_cabalistic'), `<p class="whitespace-pre-wrap">${escapeHtml(card.referencias_cabalisticas)}</p>`)}
             </div>`;
 
         showView('card-detail-view', true);
@@ -250,8 +267,8 @@
         shuffleContainer.classList.add('hidden');
         drawButton.disabled = false;
         drawThreeButton.disabled = false;
-        drawButton.textContent = 'Tirar uma carta';
-        drawThreeButton.textContent = 'Tirar três cartas';
+        drawButton.textContent = t('draw_one');
+        drawThreeButton.textContent = t('draw_three');
         clearAiReading();
         updateAiAvailability();
     }
@@ -259,7 +276,7 @@
     function drawCards(count) {
         drawButton.disabled = true;
         drawThreeButton.disabled = true;
-        (count === 1 ? drawButton : drawThreeButton).textContent = 'Embaralhando...';
+        (count === 1 ? drawButton : drawThreeButton).textContent = t('shuffling');
         shuffleContainer.innerHTML = '';
         shuffleContainer.classList.remove('hidden');
 
@@ -302,7 +319,7 @@
             drawButton.disabled = false;
             drawThreeButton.disabled = false;
             drawButton.textContent = count === 1 ? 'Tirar outra carta' : 'Tirar uma carta';
-            drawThreeButton.textContent = count === 3 ? 'Nova tiragem de três cartas' : 'Tirar três cartas';
+            drawThreeButton.textContent = count === 3 ? t('draw_three_new') : t('draw_three');
             updateAiAvailability();
         }, 900 + count * 900);
     }
@@ -312,7 +329,7 @@
         aiReadingContent.innerHTML = '';
         aiReadingResult.classList.add('hidden');
         interpretAiButton.classList.remove('is-loading');
-        interpretAiButton.innerHTML = '<span aria-hidden="true">✦</span> Interpretar esta tiragem com IA';
+        interpretAiButton.innerHTML = `<span aria-hidden="true">✦</span> ${t('interpret_btn')}`;
         aiRequestInFlight = false;
     }
 
@@ -324,11 +341,11 @@
         interpretAiButton.disabled = !hasDraw || !hasQuestion || aiRequestInFlight;
 
         if (!hasQuestion && hasDraw) {
-            aiReadingHint.textContent = 'Escreva sua pergunta acima para liberar a interpretação com IA.';
+            aiReadingHint.textContent = t('hint_question_only');
         } else if (hasQuestion && hasDraw) {
-            aiReadingHint.textContent = 'A IA só será chamada quando você apertar o botão. A tiragem continua funcionando sem ela.';
+            aiReadingHint.textContent = t('hint_ready');
         } else {
-            aiReadingHint.textContent = 'Escreva uma pergunta e faça uma tiragem para liberar a interpretação.';
+            aiReadingHint.textContent = t('hint_need_question');
         }
     }
 
@@ -376,7 +393,7 @@
 
     function renderAiReading(data) {
         const reading = data?.interpretacao;
-        if (!reading) throw new Error('A interpretação veio vazia.');
+        if (!reading) throw new Error(t('error_empty'));
 
         lastReading = data;
 
@@ -387,11 +404,11 @@
 
         const kicker = document.createElement('p');
         kicker.className = 'section-kicker';
-        kicker.textContent = '✦ Leitura do Tarot';
+        kicker.textContent = t('reading_kicker');
 
         const title = document.createElement('h2');
         title.className = 'font-playfair text-3xl md:text-4xl';
-        title.textContent = reading.titulo || 'Interpretação da tiragem';
+        title.textContent = reading.titulo || t('reading_fallback_title');
 
         const question = document.createElement('p');
         question.className = 'ai-reading-question';
@@ -436,7 +453,7 @@
             });
 
             aiReadingContent.appendChild(cardsGrid);
-            appendReadingSection(aiReadingContent, 'Síntese da tiragem', reading.sintese, 'ai-reading-highlight');
+            appendReadingSection(aiReadingContent, t('section_synthesis'), reading.sintese, 'ai-reading-highlight');
         } else if (reading.carta) {
             appendReadingSection(
                 aiReadingContent,
@@ -446,12 +463,12 @@
             );
         }
 
-        appendReadingSection(aiReadingContent, 'Resposta à sua pergunta', reading.resposta, 'ai-reading-answer');
-        appendReadingSection(aiReadingContent, 'Orientação', reading.orientacao);
+        appendReadingSection(aiReadingContent, t('section_answer'), reading.resposta, 'ai-reading-answer');
+        appendReadingSection(aiReadingContent, t('section_guidance'), reading.orientacao);
 
         const disclaimer = document.createElement('p');
         disclaimer.className = 'ai-reading-disclaimer';
-        disclaimer.textContent = 'Esta é uma interpretação simbólica e reflexiva do Tarot Rider-Waite, não uma certeza sobre acontecimentos futuros.';
+        disclaimer.textContent = t('disclaimer');
         aiReadingContent.appendChild(disclaimer);
 
         const narrationRow = document.createElement('div');
@@ -460,7 +477,7 @@
         const narrationButton = document.createElement('button');
         narrationButton.type = 'button';
         narrationButton.className = 'toolbar-button toolbar-button-primary';
-        narrationButton.innerHTML = '<span aria-hidden="true">🔊</span> Ouvir a leitura';
+        narrationButton.innerHTML = `<span aria-hidden="true">🔊</span> ${t('narrate_btn')}`;
         narrationButton.addEventListener('click', () => narrateReading(narrationButton, narrationRow));
 
         narrationRow.appendChild(narrationButton);
@@ -475,7 +492,7 @@
 
         narrationInFlight = true;
         button.disabled = true;
-        button.textContent = 'Tecendo a voz…';
+        button.textContent = t('narrate_loading');
 
         try {
             const response = await fetch(NARRATE_ENDPOINT, {
@@ -502,10 +519,10 @@
             player.src = url;
             player.play().catch(() => {});
 
-            button.textContent = '↻ Ouvir novamente';
+            button.textContent = t('narrate_again');
         } catch (error) {
             console.error('Falha na narração:', error);
-            button.textContent = 'A voz não respondeu — toque para tentar de novo';
+            button.textContent = t('narrate_failed');
         } finally {
             narrationInFlight = false;
             button.disabled = false;
@@ -524,14 +541,14 @@
         if (!navigator.onLine) {
             aiReadingResult.classList.remove('hidden');
             aiReadingContent.innerHTML = '';
-            appendReadingSection(aiReadingContent, 'Interpretação indisponível', 'Você está offline. A tiragem continua disponível normalmente; conecte-se à internet quando quiser solicitar a leitura com IA.');
+            appendReadingSection(aiReadingContent, t('unavailable_title'), t('offline_msg'));
             return;
         }
 
         aiRequestInFlight = true;
         interpretAiButton.disabled = true;
         interpretAiButton.classList.add('is-loading');
-        interpretAiButton.textContent = 'Consultando o Tarot…';
+        interpretAiButton.textContent = t('loading_title');
         aiReadingResult.classList.remove('hidden');
         aiReadingLoading.classList.remove('hidden');
         aiReadingContent.innerHTML = '';
@@ -549,7 +566,7 @@
             const data = await response.json().catch(() => null);
 
             if (!response.ok || !data?.ok) {
-                throw new Error(data?.details || data?.error || 'A interpretação não pôde ser concluída.');
+                throw new Error(data?.details || data?.error || t('error_failed'));
             }
 
             aiReadingLoading.classList.add('hidden');
@@ -558,17 +575,17 @@
             aiReadingLoading.classList.add('hidden');
             aiReadingContent.innerHTML = '';
             const message = error.name === 'AbortError'
-                ? 'A consulta demorou mais que o esperado. Suas cartas continuam aqui; tente novamente em alguns instantes.'
-                : 'A interpretação com IA está temporariamente indisponível. Suas cartas continuam abertas para consulta e você pode tentar novamente depois.';
+                ? t('error_slow')
+                : t('error_generic');
 
-            appendReadingSection(aiReadingContent, 'O Tarot não respondeu desta vez', message);
+            appendReadingSection(aiReadingContent, t('no_answer_title'), message);
             aiReadingResult.classList.remove('hidden');
             console.error('Falha na interpretação com IA:', error);
         } finally {
             window.clearTimeout(timeoutId);
             aiRequestInFlight = false;
             interpretAiButton.classList.remove('is-loading');
-            interpretAiButton.innerHTML = '<span aria-hidden="true">✦</span> Interpretar esta tiragem com IA';
+            interpretAiButton.innerHTML = `<span aria-hidden="true">✦</span> ${t('interpret_btn')}`;
             updateAiAvailability();
         }
     }

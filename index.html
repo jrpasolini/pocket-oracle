@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#6b3f2a">
-    <meta name="description" content="Almanaque interativo e oráculo do Tarot Rider-Waite com as 78 cartas.">
-    <title>Almanaque de Tarot Rider-Waite</title>
+    <meta name="description" content="Interactive almanac and oracle of the Rider-Waite Tarot, with all 78 cards.">
+    <title>Rider-Waite Tarot Almanac</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,25 +22,25 @@
     <div id="app" class="container mx-auto p-4 md:p-8 relative max-w-7xl">
         <header class="hero-header text-center mb-8 md:mb-10 py-6 md:py-10">
             <div class="hero-ornament">✦ ☽ ✦</div>
-            <p class="hero-kicker">Rider-Waite • Estudo • Consulta</p>
-            <h1 class="font-playfair text-5xl md:text-7xl text-amber-900 drop-shadow-lg">Almanaque de Tarot</h1>
-            <p class="hero-subtitle text-amber-800 mt-3 text-lg md:text-xl max-w-3xl mx-auto">
-                Os símbolos do clássico Rider-Waite reunidos em um grimório interativo para estudo, contemplação e tiragens intuitivas.
+            <p class="hero-kicker" data-i18n="hero_kicker">Rider-Waite • Study • Reading</p>
+            <h1 class="font-playfair text-5xl md:text-7xl text-amber-900 drop-shadow-lg" data-i18n="hero_title">Tarot Almanac</h1>
+            <p class="hero-subtitle text-amber-800 mt-3 text-lg md:text-xl max-w-3xl mx-auto" data-i18n="hero_subtitle">
+                The symbols of the classic Rider-Waite gathered into an interactive grimoire for study, contemplation and intuitive draws.
             </p>
             <div class="hero-meta flex flex-wrap gap-3 justify-center mt-6 text-sm md:text-base">
-                <span class="meta-chip">78 cartas</span>
-                <span class="meta-chip">22 Arcanos Maiores</span>
-                <span class="meta-chip">56 Arcanos Menores</span>
+                <span class="meta-chip" data-i18n="chip_cards">78 cards</span>
+                <span class="meta-chip" data-i18n="chip_major">22 Major Arcana</span>
+                <span class="meta-chip" data-i18n="chip_minor">56 Minor Arcana</span>
             </div>
         </header>
 
         <nav class="oracle-nav p-4 md:p-5 rounded-[1.75rem] shadow-lg mb-8 flex flex-col lg:flex-row items-center justify-between gap-4">
             <div class="flex flex-wrap gap-3 justify-center">
-                <button type="button" data-view="home-view" class="toolbar-button toolbar-button-primary">Todas as cartas</button>
-                <button type="button" data-view="random-draw-view" class="toolbar-button toolbar-button-primary">Consultar as cartas</button>
+                <button type="button" data-view="home-view" class="toolbar-button toolbar-button-primary" data-i18n="nav_all">All cards</button>
+                <button type="button" data-view="random-draw-view" class="toolbar-button toolbar-button-primary" data-i18n="nav_draw">Draw the cards</button>
                 <div class="relative inline-block text-left" data-gallery-only>
                     <button id="explore-menu-button" type="button" aria-expanded="false" aria-haspopup="true" class="toolbar-button toolbar-button-secondary">
-                        Explorar por...
+                        <span data-i18n="nav_explore">Explore by…</span>
                         <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
                     </button>
                     <div id="explore-menu" class="origin-top-right absolute left-0 lg:right-0 lg:left-auto mt-3 w-64 rounded-2xl shadow-xl bg-[rgba(251,245,231,0.98)] ring-1 ring-[rgba(104,70,42,0.15)] hidden z-20">
@@ -49,18 +49,19 @@
                 </div>
             </div>
             <div class="relative w-full lg:w-auto" data-gallery-only>
-                <label class="sr-only" for="search-input">Pesquisar cartas</label>
-                <input type="search" id="search-input" placeholder="Pesquisar por nome, símbolo, palavra-chave..." class="toolbar-search w-full lg:w-96 px-5 py-3 rounded-2xl">
+                <label class="sr-only" for="search-input" data-i18n="search_label">Search cards</label>
+                <input type="search" id="search-input" placeholder="Search by name, symbol, keyword…" data-i18n-ph="search_placeholder" class="toolbar-search w-full lg:w-96 px-5 py-3 rounded-2xl">
             </div>
+            <button type="button" data-lang-toggle class="toolbar-button toolbar-button-secondary" aria-label="Switch to English">PT</button>
         </nav>
 
         <main id="main-content">
             <section id="home-view" class="p-4 md:p-8 oracle-panel home-panel">
                 <div class="section-heading mb-8 flex flex-col lg:flex-row gap-5 lg:items-end lg:justify-between">
                     <div>
-                        <p class="section-kicker">Grimório completo</p>
-                        <h2 class="font-playfair text-3xl md:text-4xl text-amber-950">As 78 Cartas do Tarot</h2>
-                        <p class="section-description mt-2 max-w-2xl">Explore os Arcanos Maiores e Menores, suas imagens, correspondências, palavras-chave e significados.</p>
+                        <p class="section-kicker" data-i18n="home_kicker">Complete grimoire</p>
+                        <h2 class="font-playfair text-3xl md:text-4xl text-amber-950" data-i18n="home_title">The 78 Tarot Cards</h2>
+                        <p class="section-description mt-2 max-w-2xl" data-i18n="home_desc">Explore the Major and Minor Arcana — their imagery, correspondences, keywords and meanings.</p>
                     </div>
                     <p id="results-count" class="text-sm opacity-70" aria-live="polite"></p>
                 </div>
@@ -70,43 +71,43 @@
 
             <section id="card-detail-view" class="hidden p-4 md:p-8 oracle-panel">
                 <div class="detail-actions mb-8 flex flex-wrap gap-3">
-                    <button id="return-draw-button" type="button" class="hidden toolbar-button toolbar-button-primary">&larr; Retornar à tiragem</button>
-                    <button id="return-gallery-button" type="button" class="toolbar-button toolbar-button-tertiary">&larr; Voltar para todas as cartas</button>
+                    <button id="return-draw-button" type="button" class="hidden toolbar-button toolbar-button-primary" data-i18n="back_to_draw">&larr; Back to the draw</button>
+                    <button id="return-gallery-button" type="button" class="toolbar-button toolbar-button-tertiary" data-i18n="back_to_gallery">&larr; Back to all cards</button>
                 </div>
                 <div id="card-detail-content" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
             </section>
 
             <section id="random-draw-view" class="hidden text-center p-4 md:p-8 oracle-panel draw-panel">
                 <div class="max-w-3xl mx-auto">
-                    <p class="section-kicker">Consulta intuitiva</p>
-                    <h2 class="font-playfair text-4xl md:text-5xl mb-4 text-amber-950">Ritual de Tiragem</h2>
-                    <p class="section-description mb-8 text-lg">Concentre-se em sua pergunta, respire fundo e escolha uma tiragem. As cartas serão reveladas uma a uma.</p>
+                    <p class="section-kicker" data-i18n="draw_kicker">Intuitive reading</p>
+                    <h2 class="font-playfair text-4xl md:text-5xl mb-4 text-amber-950" data-i18n="draw_title">The Draw Ritual</h2>
+                    <p class="section-description mb-8 text-lg" data-i18n="draw_desc">Focus on your question, take a deep breath and choose a spread. The cards are revealed one by one.</p>
                 </div>
                 <div class="oracle-question-panel max-w-3xl mx-auto mb-7 text-left">
-                    <label for="oracle-question" class="oracle-question-label">Sua pergunta ao Tarot</label>
-                    <textarea id="oracle-question" rows="3" maxlength="800" placeholder="Escreva sua pergunta aqui. A tiragem funciona mesmo sem IA; a pergunta só será enviada se você solicitar uma interpretação." class="oracle-question-input"></textarea>
-                    <div class="oracle-question-meta"><span>A pergunta só é enviada quando você pede a interpretação com IA.</span><span id="oracle-question-count">0/800</span></div>
+                    <label for="oracle-question" class="oracle-question-label" data-i18n="question_label">Your question to the Tarot</label>
+                    <textarea id="oracle-question" rows="3" maxlength="800" placeholder="Write your question here. The draw works even without AI; the question is only sent if you ask for an interpretation." data-i18n-ph="question_placeholder" class="oracle-question-input"></textarea>
+                    <div class="oracle-question-meta"><span data-i18n="question_note">The question is only sent when you ask for the AI interpretation.</span><span id="oracle-question-count">0/800</span></div>
                 </div>
                 <div class="draw-actions flex flex-wrap justify-center gap-4">
-                    <button id="draw-button" type="button" class="draw-button draw-button-primary">Tirar uma carta</button>
-                    <button id="draw-three-button" type="button" class="draw-button draw-button-secondary">Tirar três cartas</button>
+                    <button id="draw-button" type="button" class="draw-button draw-button-primary" data-i18n="draw_one">Draw one card</button>
+                    <button id="draw-three-button" type="button" class="draw-button draw-button-secondary" data-i18n="draw_three">Draw three cards</button>
                 </div>
-                <div class="draw-hint mt-6 text-sm md:text-base">Clique em uma carta revelada para consultar seus detalhes. Se quiser uma leitura conjunta, use a interpretação com IA.</div>
+                <div class="draw-hint mt-6 text-sm md:text-base" data-i18n="draw_hint">Tap a revealed card to see its details. For a reading of the whole spread, use the AI interpretation.</div>
                 <div id="shuffle-animation-container" class="mt-10 flex flex-wrap justify-center items-start min-h-96 hidden gap-5 md:gap-8" aria-live="polite"></div>
 
                 <div id="ai-reading-actions" class="ai-reading-actions hidden">
                     <button id="interpret-ai-button" type="button" class="ai-interpret-button" disabled>
-                        <span aria-hidden="true">✦</span> Interpretar esta tiragem com IA
+                        <span aria-hidden="true">✦</span> <span data-i18n="interpret_btn">Interpret this spread with AI</span>
                     </button>
-                    <p id="ai-reading-hint" class="ai-reading-hint">Escreva uma pergunta e faça uma tiragem para liberar a interpretação.</p>
+                    <p id="ai-reading-hint" class="ai-reading-hint" data-i18n="hint_need_question">Write a question and draw a spread to unlock the interpretation.</p>
                 </div>
 
                 <section id="ai-reading-result" class="ai-reading-result hidden" aria-live="polite">
                     <div id="ai-reading-loading" class="ai-reading-loading hidden">
                         <span class="ai-loading-symbol" aria-hidden="true">✦</span>
                         <div>
-                            <strong>Consultando o Tarot…</strong>
-                            <p>A leitura está sendo construída a partir da sua pergunta e das cartas sorteadas.</p>
+                            <strong data-i18n="loading_title">Consulting the Tarot…</strong>
+                            <p data-i18n="loading_desc">The reading is being woven from your question and the cards drawn.</p>
                         </div>
                     </div>
                     <div id="ai-reading-content"></div>
@@ -115,12 +116,14 @@
         </main>
 
         <footer class="site-footer text-center mt-12 text-amber-800">
-            <p class="font-playfair text-xl text-amber-900">Almanaque de Tarot Rider-Waite</p>
-            <p class="mt-2 text-sm md:text-base opacity-80">&copy; 2026 Antonio Pasolini e Melissa Pasolini</p>
+            <p class="font-playfair text-xl text-amber-900" data-i18n="footer_brand">Rider-Waite Tarot Almanac</p>
+            <p class="mt-2 text-sm md:text-base opacity-80" data-i18n="footer_copyright">&copy; 2026 Antonio Pasolini and Melissa Pasolini</p>
         </footer>
     </div>
 
     <script src="js/cards.js"></script>
+    <script src="js/cards.en.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
