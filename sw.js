@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'pocket-oracle-';
-const CACHE_NAME = 'pocket-oracle-v7-audit-20261015';
+const CACHE_NAME = 'pocket-oracle-v8-branded-20261015';
 
 const CORE_ASSETS = [
   './',
