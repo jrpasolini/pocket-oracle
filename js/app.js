@@ -21,6 +21,9 @@
     const aiReadingContent = document.getElementById('ai-reading-content');
 
     const AI_ENDPOINT = 'https://tarot-rider-waite-ai.antonio-pasolini.workers.dev/interpretar';
+    const NARRATE_ENDPOINT = 'https://tarot-rider-waite-ai.antonio-pasolini.workers.dev/narrar';
+    let lastReading = null;
+    let narrationInFlight = false;
     const threeCardPositions = ['Passado', 'Presente', 'Futuro'];
 
     const propertyMap = {
@@ -375,6 +378,8 @@
         const reading = data?.interpretacao;
         if (!reading) throw new Error('A interpretação veio vazia.');
 
+        lastReading = data;
+
         aiReadingContent.innerHTML = '';
 
         const header = document.createElement('header');
@@ -449,8 +454,62 @@
         disclaimer.textContent = 'Esta é uma interpretação simbólica e reflexiva do Tarot Rider-Waite, não uma certeza sobre acontecimentos futuros.';
         aiReadingContent.appendChild(disclaimer);
 
+        const narrationRow = document.createElement('div');
+        narrationRow.className = 'ai-reading-narration';
+
+        const narrationButton = document.createElement('button');
+        narrationButton.type = 'button';
+        narrationButton.className = 'toolbar-button toolbar-button-primary';
+        narrationButton.innerHTML = '<span aria-hidden="true">🔊</span> Ouvir a leitura';
+        narrationButton.addEventListener('click', () => narrateReading(narrationButton, narrationRow));
+
+        narrationRow.appendChild(narrationButton);
+        aiReadingContent.appendChild(narrationRow);
+
         aiReadingResult.classList.remove('hidden');
         aiReadingResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function narrateReading(button, row) {
+        if (narrationInFlight || !lastReading?.interpretacao) return;
+
+        narrationInFlight = true;
+        button.disabled = true;
+        button.textContent = 'Tecendo a voz…';
+
+        try {
+            const response = await fetch(NARRATE_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ leitura: lastReading.interpretacao })
+            });
+
+            if (!response.ok) throw new Error(`narration-http-${response.status}`);
+
+            const blob = await response.blob();
+            let player = row.querySelector('audio');
+
+            if (!player) {
+                player = document.createElement('audio');
+                player.controls = true;
+                player.className = 'ai-reading-audio';
+                row.appendChild(player);
+            }
+
+            if (player.dataset.url) URL.revokeObjectURL(player.dataset.url);
+            const url = URL.createObjectURL(blob);
+            player.dataset.url = url;
+            player.src = url;
+            player.play().catch(() => {});
+
+            button.textContent = '↻ Ouvir novamente';
+        } catch (error) {
+            console.error('Falha na narração:', error);
+            button.textContent = 'A voz não respondeu — toque para tentar de novo';
+        } finally {
+            narrationInFlight = false;
+            button.disabled = false;
+        }
     }
 
     async function requestAiReading() {
