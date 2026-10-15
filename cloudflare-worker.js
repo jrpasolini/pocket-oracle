@@ -1,7 +1,18 @@
 const SERVICE = 'tarot-rider-waite-ai';
-const VERSION = '1.0.0';
-const MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
+const VERSION = '1.1.0';
 const MAX_BODY_LENGTH = 50_000;
+
+// Cascata de modelos, em ordem de preferência.
+// `jsonMode: true`  = modelo na lista oficial de JSON Mode da Workers AI →
+//                     `response_format: json_schema` é honrado pela plataforma.
+// `jsonMode: false` = modelo fora da lista → pedimos o JSON no próprio prompt
+//                     e validamos na saída; se falhar, caímos para o próximo.
+// Docs: https://developers.cloudflare.com/workers-ai/features/json-mode/
+const MODEL_CHAIN = [
+  { id: '@cf/google/gemma-4-26b-a4b-it', jsonMode: false },
+  { id: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', jsonMode: true }
+];
+const MODEL = MODEL_CHAIN[MODEL_CHAIN.length - 1].id;
 
 // O site é publicado no GitHub Pages. Localhost permanece liberado para testes.
 const ALLOWED_ORIGINS = new Set([
@@ -178,8 +189,8 @@ function readingSchema(type) {
   };
 }
 
-function buildMessages(payload) {
-  const system = `Você é uma intérprete experiente do Tarot Rider-Waite. Produza uma leitura simbólica, acolhedora, clara e útil em português do Brasil.
+function buildMessages(payload, { jsonMode = true } = {}) {
+  let system = `Você é uma intérprete experiente do Tarot Rider-Waite. Produza uma leitura simbólica, acolhedora, clara e útil em português do Brasil.
 
 Regras obrigatórias:
 - Use somente a pergunta, as cartas e as correspondências fornecidas.
@@ -191,6 +202,10 @@ Regras obrigatórias:
 - Não substitua aconselhamento médico, jurídico, financeiro ou de segurança. Em temas sensíveis, mantenha a leitura reflexiva e incentive ajuda profissional quando necessário.
 - Seja específica, evite fatalismo, alarmismo, certezas sobrenaturais e frases genéricas.
 - Responda estritamente no formato JSON solicitado, sem Markdown.`;
+
+  if (!jsonMode) {
+    system += `\n\nFORMATO OBRIGATÓRIO: responda apenas com um objeto JSON válido — sem Markdown, sem cercas de código e sem nenhum texto fora do JSON — que satisfaça exatamente este JSON Schema:\n${JSON.stringify(readingSchema(payload.tipo))}`;
+  }
 
   const user = `Faça a interpretação desta tiragem do Tarot Rider-Waite:\n${JSON.stringify(payload)}`;
   return [
@@ -241,27 +256,38 @@ async function interpret(request, env, origin) {
     throw new RequestError('O binding Workers AI "tarot-ai" não está disponível.', 503);
   }
 
-  const result = await ai.run(MODEL, {
-    messages: buildMessages(payload),
-    response_format: {
-      type: 'json_schema',
-      json_schema: readingSchema(payload.tipo)
-    },
-    max_tokens: payload.tipo === 'tres_cartas' ? 1_300 : 850,
-    temperature: 0.55,
-    top_p: 0.9,
-    repetition_penalty: 1.08
-  });
+  const failures = [];
 
-  const interpretacao = extractReading(result);
-  return json({
-    ok: true,
-    model: MODEL,
-    tipo: payload.tipo,
-    pergunta: payload.pergunta,
-    interpretacao,
-    ...(result?.usage ? { usage: result.usage } : {})
-  }, 200, origin);
+  for (const model of MODEL_CHAIN) {
+    try {
+      const result = await ai.run(model.id, {
+        messages: buildMessages(payload, model),
+        ...(model.jsonMode
+          ? { response_format: { type: 'json_schema', json_schema: readingSchema(payload.tipo) } }
+          : {}),
+        max_tokens: payload.tipo === 'tres_cartas' ? 1_300 : 850,
+        temperature: 0.55,
+        top_p: 0.9,
+        repetition_penalty: 1.08
+      });
+
+      const interpretacao = extractReading(result);
+      return json({
+        ok: true,
+        model: model.id,
+        fallbacksUsed: failures.length,
+        tipo: payload.tipo,
+        pergunta: payload.pergunta,
+        interpretacao,
+        ...(result?.usage ? { usage: result.usage } : {})
+      }, 200, origin);
+    } catch (error) {
+      failures.push(`${model.id}: ${error?.message || String(error)}`);
+      console.error(`Modelo ${model.id} falhou:`, error);
+    }
+  }
+
+  throw new RequestError(`Nenhum modelo da cascata devolveu uma leitura válida. ${failures.join(' | ')}`, 502);
 }
 
 export default {
@@ -283,6 +309,7 @@ export default {
         service: SERVICE,
         version: VERSION,
         model: MODEL,
+        modelChain: MODEL_CHAIN.map(entry => entry.id),
         status: 'online',
         endpoints: { health: 'GET /health', interpretar: 'POST /interpretar' }
       }, 200, origin);

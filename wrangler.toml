@@ -1,0 +1,11 @@
+name = "tarot-rider-waite-ai"
+main = "cloudflare-worker.js"
+compatibility_date = "2026-10-15"
+
+# Binding da Workers AI. O Worker aceita tanto `env["tarot-ai"]` (nome usado
+# no painel) quanto o fallback `env.AI`.
+[ai]
+binding = "tarot-ai"
+
+[observability]
+enabled = true
