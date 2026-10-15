@@ -31,6 +31,9 @@
     const NARRATE_ENDPOINT = 'https://tarot-rider-waite-ai.antonio-pasolini.workers.dev/narrar';
     let lastReading = null;
     let narrationInFlight = false;
+    let narrationRequestController = null;
+    let narrationRequestId = 0;
+    let currentDetailCardId = null;
     let readingRequestController = null;
     let readingRequestId = 0;
     const drawPositions = () => [t('position_past'), t('position_present'), t('position_future')];
@@ -47,12 +50,33 @@
     if (window.I18N) {
         I18N.onChange(() => {
             cards = buildDeck();
-            // O sorteio já feito precisa acompanhar o novo baralho, senão o
-            // payload continuaria mandando os nomes no idioma anterior.
             currentDraw = currentDraw.map(card => cards[card.id] || card);
             renderCards();
             populateExploreMenu();
-            if (typeof updateAiAvailability === 'function') updateAiAvailability();
+
+            // Trocar o idioma invalida a leitura (e a autorização de voz)
+            // anterior; preservamos as cartas sorteadas para nova interpretação.
+            clearAiReading();
+            shuffleContainer.querySelectorAll('.draw-card-wrap').forEach((wrapper, index) => {
+                const card = currentDraw[index];
+                if (!card) return;
+                const position = wrapper.querySelector('.draw-position-label');
+                if (position) {
+                    const number = position.querySelector('span');
+                    position.replaceChildren(number, document.createTextNode(drawPositions()[index]));
+                }
+                const label = wrapper.querySelector('.draw-card-label');
+                if (label) label.textContent = card.nome;
+                const flip = wrapper.querySelector('.card-flip');
+                if (flip) flip.setAttribute('aria-label', `Reveal ${card.nome}`);
+                const image = wrapper.querySelector('.card-face-front img');
+                if (image) image.alt = card.nome;
+            });
+            updateDrawButtonLabels();
+            updateAiAvailability();
+            if (currentDetailCardId !== null && !document.getElementById('card-detail-view').classList.contains('hidden')) {
+                showCardDetail(currentDetailCardId, currentDetailFromDraw);
+            }
         });
     }
 
@@ -221,6 +245,7 @@
     function showCardDetail(id, fromDraw) {
         const card = cards.find(item => item.id === id);
         if (!card) return;
+        currentDetailCardId = id;
         currentDetailFromDraw = fromDraw;
 
         const detailView = document.getElementById('card-detail-view');
@@ -264,6 +289,16 @@
             </div>`;
 
         showView('card-detail-view', true);
+    }
+
+    function updateDrawButtonLabels() {
+        if (!currentDrawRevealed && currentDraw.length) {
+            drawButton.textContent = t('shuffling');
+            drawThreeButton.textContent = t('shuffling');
+            return;
+        }
+        drawButton.textContent = currentDraw.length === 1 ? t('draw_one_new') : t('draw_one');
+        drawThreeButton.textContent = currentDraw.length === 3 ? t('draw_three_new') : t('draw_three');
     }
 
     function resetDraw() {
@@ -324,8 +359,7 @@
             currentDrawRevealed = true;
             drawButton.disabled = false;
             drawThreeButton.disabled = false;
-            drawButton.textContent = count === 1 ? 'Tirar outra carta' : 'Tirar uma carta';
-            drawThreeButton.textContent = count === 3 ? t('draw_three_new') : t('draw_three');
+            updateDrawButtonLabels();
             updateAiAvailability();
         }, 900 + count * 900);
     }
@@ -334,6 +368,15 @@
         readingRequestId += 1;
         if (readingRequestController) readingRequestController.abort();
         readingRequestController = null;
+        narrationRequestId += 1;
+        if (narrationRequestController) narrationRequestController.abort();
+        narrationRequestController = null;
+        narrationInFlight = false;
+        aiReadingContent.querySelectorAll('audio').forEach(player => {
+            player.pause();
+            if (player.dataset.url) URL.revokeObjectURL(player.dataset.url);
+            player.removeAttribute('src');
+        });
         lastReading = null;
         aiReadingLoading.classList.add('hidden');
         aiReadingContent.innerHTML = '';
@@ -490,6 +533,9 @@
         if (narrationInFlight || !lastReading?.narrationToken) return;
 
         narrationInFlight = true;
+        const requestId = ++narrationRequestId;
+        const controller = new AbortController();
+        narrationRequestController = controller;
         button.disabled = true;
         button.textContent = t('narrate_loading');
 
@@ -497,12 +543,15 @@
             const response = await fetch(NARRATE_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ narrationToken: lastReading.narrationToken })
+                body: JSON.stringify({ narrationToken: lastReading.narrationToken }),
+                signal: controller.signal
             });
+            if (requestId !== narrationRequestId) return;
 
             if (!response.ok) throw new Error(`narration-http-${response.status}`);
 
             const blob = await response.blob();
+            if (requestId !== narrationRequestId) return;
             let player = row.querySelector('audio');
 
             if (!player) {
@@ -520,11 +569,15 @@
 
             button.textContent = t('narrate_again');
         } catch (error) {
+            if (requestId !== narrationRequestId) return;
             console.error('Falha na narração:', error);
             button.textContent = t('narrate_failed');
         } finally {
-            narrationInFlight = false;
-            button.disabled = false;
+            if (requestId === narrationRequestId) {
+                narrationRequestController = null;
+                narrationInFlight = false;
+                button.disabled = false;
+            }
         }
     }
 
