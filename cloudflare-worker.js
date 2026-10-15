@@ -1,5 +1,5 @@
 const SERVICE = 'tarot-rider-waite-ai';
-const VERSION = '1.5.1';
+const VERSION = '1.6.0';
 const MAX_BODY_LENGTH = 50_000;
 
 // Cascata de modelos, em ordem de preferência.
@@ -282,6 +282,66 @@ function extractReading(result) {
   return JSON.parse(value);
 }
 
+// Valida a ESTRUTURA da leitura, não só a sintaxe do JSON.
+// Sem isto, um `{}` (ou um objeto com tipos errados) passa como válido e
+// impede indevidamente o fallback para o próximo modelo da cascata.
+function validateReading(reading, type) {
+  if (!reading || typeof reading !== 'object' || Array.isArray(reading)) {
+    throw new Error('A leitura não é um objeto JSON.');
+  }
+
+  for (const key of ['titulo', 'abertura', 'resposta', 'orientacao']) {
+    if (typeof reading[key] !== 'string' || !reading[key].trim()) {
+      throw new Error(`Campo obrigatório ausente ou vazio: ${key}.`);
+    }
+  }
+
+  if (type === 'tres_cartas') {
+    if (!Array.isArray(reading.cartas) || reading.cartas.length !== 3) {
+      throw new Error('A leitura de três cartas exige exatamente 3 itens em "cartas".');
+    }
+    reading.cartas.forEach((item, index) => {
+      if (!item || typeof item !== 'object' || typeof item.interpretacao !== 'string' || !item.interpretacao.trim()) {
+        throw new Error(`A carta ${index + 1} da leitura está incompleta.`);
+      }
+    });
+    if (typeof reading.sintese !== 'string' || !reading.sintese.trim()) {
+      throw new Error('Campo obrigatório ausente ou vazio: sintese.');
+    }
+  } else if (!reading.carta || typeof reading.carta.interpretacao !== 'string' || !reading.carta.interpretacao.trim()) {
+    throw new Error('A leitura de uma carta está incompleta.');
+  }
+
+  return reading;
+}
+
+// --- Limite de frequência (primeira linha de defesa) -------------------------
+// Em memória, por isolate: barra abuso casual nos endpoints que custam dinheiro.
+// A proteção forte é uma regra de Rate Limiting no painel da Cloudflare —
+// documentada no DEPLOY.md. Isto aqui não substitui aquilo.
+const RATE_LIMITS = {
+  '/interpretar': { max: 20, windowSeconds: 60 },
+  '/narrar': { max: 6, windowSeconds: 60 }
+};
+const rateHits = new Map();
+
+function withinRateLimit(request, pathname) {
+  const limits = RATE_LIMITS[pathname];
+  if (!limits) return true;
+
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const slot = Math.floor(Date.now() / (limits.windowSeconds * 1000));
+  const key = `${pathname}|${ip}|${slot}`;
+  const used = rateHits.get(key) || 0;
+
+  if (used >= limits.max) return false;
+
+  rateHits.set(key, used + 1);
+  if (rateHits.size > 5_000) rateHits.clear();
+
+  return true;
+}
+
 async function parseRequestBody(request) {
   const declaredLength = Number(request.headers.get('content-length') || 0);
   if (declaredLength > MAX_BODY_LENGTH) {
@@ -365,6 +425,7 @@ async function narrate(request, env, origin) {
     {
       method: 'POST',
       headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
+      signal: AbortSignal.timeout(25_000),
       body: JSON.stringify({
         text,
         model_id: env.ELEVENLABS_MODEL_ID || DEFAULT_TTS_MODEL,
@@ -416,7 +477,7 @@ async function interpret(request, env, origin, debug = false) {
       const result = await ai.run(model.id, options);
       raw = result;
 
-      const interpretacao = extractReading(result);
+      const interpretacao = validateReading(extractReading(result), payload.tipo);
       return json({
         ok: true,
         model: model.id,
@@ -428,16 +489,13 @@ async function interpret(request, env, origin, debug = false) {
         ...(result?.usage ? { usage: result.usage } : {})
       }, 200, origin);
     } catch (error) {
-      failures.push({
-        model: model.id,
-        error: error?.message || String(error),
-        raw: raw === null ? null : JSON.stringify(raw).slice(0, 700)
-      });
-      console.error(`Modelo ${model.id} falhou:`, error);
+      failures.push({ model: model.id, error: error?.message || String(error) });
+      console.error(`Modelo ${model.id} falhou:`, error, raw === null ? '' : JSON.stringify(raw).slice(0, 700));
     }
   }
 
-  throw new RequestError(`Nenhum modelo da cascata devolveu uma leitura válida. ${failures.map(f => `${f.model}: ${f.error}`).join(' | ')}`, 502);
+  console.error('Cascata falhou por completo:', failures);
+  throw new RequestError('Nenhum modelo conseguiu concluir a leitura agora.', 502);
 }
 
 export default {
@@ -452,7 +510,15 @@ export default {
     }
 
     const url = new URL(request.url);
-    const debug = url.searchParams.get('debug') === '1' || request.headers.get('x-debug') === '1';
+
+    // Diagnóstico interno: só com token administrativo (env.DEBUG_TOKEN).
+    // Nunca por query string pública — a resposta não devolve mais nada bruto.
+    const debugToken = env.DEBUG_TOKEN;
+    const debug = Boolean(debugToken) && request.headers.get('x-debug') === debugToken;
+
+    if (!withinRateLimit(request, url.pathname)) {
+      return json({ ok: false, error: 'Muitas requisições. Tente novamente em instantes.' }, 429, origin);
+    }
 
     if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) {
       return json({
@@ -478,15 +544,20 @@ export default {
       return await interpret(request, env, origin, debug);
     } catch (error) {
       const status = error instanceof RequestError ? error.status : 502;
+      const isNarration = url.pathname === '/narrar';
+      const requestId = crypto.randomUUID().slice(0, 8);
       const details = error instanceof RequestError
         ? error.message
-        : 'O serviço de IA não conseguiu concluir a leitura agora.';
+        : (isNarration
+          ? 'O serviço de voz não conseguiu concluir a narração agora.'
+          : 'O serviço de IA não conseguiu concluir a leitura agora.');
 
-      console.error('Falha em /interpretar:', error);
+      console.error(`Falha em ${url.pathname} [${requestId}]:`, error);
       return json({
         ok: false,
-        error: 'Não foi possível realizar a interpretação.',
-        details
+        error: isNarration ? 'Não foi possível gerar a narração.' : 'Não foi possível realizar a interpretação.',
+        details,
+        requestId
       }, status, origin);
     }
   }

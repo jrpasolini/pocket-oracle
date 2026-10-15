@@ -45,8 +45,12 @@
     if (window.I18N) {
         I18N.onChange(() => {
             cards = buildDeck();
+            // O sorteio já feito precisa acompanhar o novo baralho, senão o
+            // payload continuaria mandando os nomes no idioma anterior.
+            currentDraw = currentDraw.map(card => cards[card.id] || card);
             renderCards();
             populateExploreMenu();
+            if (typeof updateAiAvailability === 'function') updateAiAvailability();
         });
     }
 
@@ -353,6 +357,7 @@
         return {
             tipo: currentDraw.length === 3 ? 'tres_cartas' : 'uma_carta',
             pergunta: questionInput.value.trim(),
+            idioma: window.I18N ? I18N.lang : 'en',
             cartas: currentDraw.map((card, index) => ({
                 posicao: currentDraw.length === 3 ? threeCardPositions[index] : 'Carta principal',
                 orientacao: 'normal',

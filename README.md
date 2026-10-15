@@ -26,11 +26,19 @@ Rider-Waite card images are public domain, obtained from a collection based on t
 ## How it works
 
 1. The user writes a question and draws one card, or three (Past / Present / Future).
-2. The front end sends only the question and the drawn cards to the Worker.
+2. The front end sends the question, the drawn cards and the interface language to the Worker.
 3. The Worker validates the payload, builds the prompt and calls an open-weight model through Workers AI.
-4. The model returns a **structured JSON reading** (strict schema), which the front end renders as sections.
+4. The model returns a **structured JSON reading**, which is validated against the expected shape before being rendered as sections.
 
 The deck itself, the search, the filters and the draws all work **offline** — only the optional AI reading needs the network.
+
+## Data flow and privacy
+
+- **The deck, the search, the filters and the draws work offline.** Only the optional AI reading needs the network.
+- **Interpretation:** the front end sends the question and the drawn cards to the Cloudflare Worker. The Worker validates them and calls an **open-weight model** through Cloudflare Workers AI. This Worker stores neither the question nor the cards.
+- **Narration (optional):** only when the reader asks to *listen*, the front end sends the reading to the Worker, which composes the narration text and forwards it to **ElevenLabs** for speech synthesis. The ElevenLabs API key lives as a Worker secret and never reaches the browser.
+- So two external providers can receive text: **Cloudflare Workers AI** (the reading) and **ElevenLabs** (the narration, only after an explicit click). A reading may echo parts of the reader's question.
+- **Rate limiting:** the Worker applies a light per-IP limit to its paid endpoints. A production deployment should also add a Cloudflare **Rate Limiting** rule covering `/interpretar` and `/narrar`.
 
 ## Structure
 

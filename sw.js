@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tarot-rider-waite-v5-ai-final';
+const CACHE_NAME = 'pocket-oracle-v6-bilingual';
 
 const CORE_ASSETS = [
   './',
@@ -10,6 +10,8 @@ const CORE_ASSETS = [
   './fonts/lora-600.ttf',
   './fonts/playfair-display-700.ttf',
   './js/cards.js',
+  './js/cards.en.js',
+  './js/i18n.js',
   './js/app.js',
   './js/tailwindcss.js',
   './icons/icon-180.png',
