@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'pocket-oracle-';
-const CACHE_NAME = 'pocket-oracle-v9-voice-locales-20261015';
+const CACHE_NAME = 'pocket-oracle-v10-bilingual-deck-20261015';
 
 const CORE_ASSETS = [
   './',
