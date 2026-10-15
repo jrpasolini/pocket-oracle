@@ -2,6 +2,10 @@ const SERVICE = 'tarot-rider-waite-ai';
 const VERSION = '1.6.0';
 const MAX_BODY_LENGTH = 50_000;
 
+// Orçamento total do caminho de interpretação. O cliente desiste aos 45 s;
+// o Worker não deve continuar tentando modelos depois disso.
+const INTERPRET_BUDGET_MS = 40_000;
+
 // Cascata de modelos, em ordem de preferência.
 // `jsonMode: true`  = modelo na lista oficial de JSON Mode da Workers AI →
 //                     `response_format: json_schema` é honrado pela plataforma.
@@ -459,8 +463,14 @@ async function interpret(request, env, origin, debug = false) {
   }
 
   const failures = [];
+  const deadline = Date.now() + INTERPRET_BUDGET_MS;
 
   for (const model of MODEL_CHAIN) {
+    if (Date.now() > deadline) {
+      failures.push({ model: model.id, error: 'Orçamento de tempo esgotado antes da tentativa.' });
+      break;
+    }
+
     let raw = null;
     try {
       const options = {

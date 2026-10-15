@@ -102,7 +102,12 @@
             detail_reversed: 'When reversed',
             detail_quick_answer: 'Quick answer',
             detail_correspondences: 'Correspondences',
-            shuffling: 'Shuffling…'
+            shuffling: 'Shuffling…',
+
+            position_past: 'Past',
+            position_present: 'Present',
+            position_future: 'Future',
+            position_main: 'Main card'
         },
         pt: {
             doc_title: 'Almanaque de Tarot Rider-Waite',
@@ -197,7 +202,12 @@
             detail_reversed: 'Quando invertida',
             detail_quick_answer: 'Resposta rápida',
             detail_correspondences: 'Correspondências',
-            shuffling: 'Embaralhando…'
+            shuffling: 'Embaralhando…',
+
+            position_past: 'Passado',
+            position_present: 'Presente',
+            position_future: 'Futuro',
+            position_main: 'Carta principal'
         }
     };
 

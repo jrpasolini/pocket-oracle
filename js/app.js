@@ -31,7 +31,7 @@
     const NARRATE_ENDPOINT = 'https://tarot-rider-waite-ai.antonio-pasolini.workers.dev/narrar';
     let lastReading = null;
     let narrationInFlight = false;
-    const threeCardPositions = ['Passado', 'Presente', 'Futuro'];
+    const drawPositions = () => [t('position_past'), t('position_present'), t('position_future')];
 
     const propertyMap = {
         naipe: 'prop_naipe',
@@ -294,7 +294,7 @@
             const wrapper = document.createElement('div');
             wrapper.className = 'shuffle-container draw-card-wrap flex flex-col items-center';
             wrapper.innerHTML = `
-                ${count === 3 ? `<div class="draw-position-label"><span>${index + 1}</span>${threeCardPositions[index]}</div>` : ''}
+                ${count === 3 ? `<div class="draw-position-label"><span>${index + 1}</span>${drawPositions()[index]}</div>` : ''}
                 <div class="card-flip cursor-pointer" role="button" tabindex="0" aria-label="Revelar ${escapeHtml(card.nome)}">
                     <div class="card-face card-face-back"><div class="card-back-ornament" aria-hidden="true"><span class="card-back-moon">☾</span><span class="card-back-star">✦</span><span class="card-back-moon">☽</span></div></div>
                     <div class="card-face card-face-front"><img src="${escapeHtml(card.imagem)}" alt="${escapeHtml(card.nome)}" class="w-full h-full object-cover rounded-lg"></div>
@@ -359,7 +359,7 @@
             pergunta: questionInput.value.trim(),
             idioma: window.I18N ? I18N.lang : 'en',
             cartas: currentDraw.map((card, index) => ({
-                posicao: currentDraw.length === 3 ? threeCardPositions[index] : 'Carta principal',
+                posicao: currentDraw.length === 3 ? drawPositions()[index] : t('position_main'),
                 orientacao: 'normal',
                 nome: card.nome,
                 numero: card.numero,
