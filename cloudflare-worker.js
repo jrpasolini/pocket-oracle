@@ -1,5 +1,5 @@
 const SERVICE = 'tarot-rider-waite-ai';
-const VERSION = '1.5.0';
+const VERSION = '1.5.1';
 const MAX_BODY_LENGTH = 50_000;
 
 // Cascata de modelos, em ordem de preferência.
@@ -305,6 +305,9 @@ async function parseRequestBody(request) {
 // (`ELEVENLABS_API_KEY`). Voz e modelo entram por env.
 const NARRATION_MAX_CHARS = 5_000;
 const DEFAULT_TTS_MODEL = 'eleven_v4';
+// Voz padrão do projeto — sobreponível por `ELEVENLABS_VOICE_ID`.
+// Não é segredo: é escolha de produto (e o id da voz é público na API da ElevenLabs).
+const DEFAULT_VOICE_ID = 'RGymW84CSmfVugnA5tvA';
 
 function composeNarration(leitura = {}) {
   const parts = [];
@@ -351,10 +354,7 @@ async function narrate(request, env, origin) {
     throw new RequestError('A narração não está configurada (falta ELEVENLABS_API_KEY).', 503);
   }
 
-  const voiceId = env.ELEVENLABS_VOICE_ID;
-  if (!voiceId) {
-    throw new RequestError('A narração não está configurada (falta ELEVENLABS_VOICE_ID).', 503);
-  }
+  const voiceId = env.ELEVENLABS_VOICE_ID || DEFAULT_VOICE_ID;
 
   const payload = validateNarration(await parseRequestBody(request));
   const text = (payload.texto || composeNarration(payload.leitura)).trim();
