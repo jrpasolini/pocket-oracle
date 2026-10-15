@@ -1,5 +1,5 @@
 const SERVICE = 'tarot-rider-waite-ai';
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 const MAX_BODY_LENGTH = 50_000;
 
 // Cascata de modelos, em ordem de preferência.
@@ -12,13 +12,15 @@ const MODEL_CHAIN = [
   {
     id: '@cf/google/gemma-4-26b-a4b-it',
     jsonMode: false,
-    maxTokensParam: 'max_completion_tokens'
+    maxTokensParam: 'max_completion_tokens',
+    tokens: { uma_carta: 2_048, tres_cartas: 4_096 }
   },
   {
     id: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
     jsonMode: true,
     maxTokensParam: 'max_tokens',
-    repetitionPenalty: 1.08
+    repetitionPenalty: 1.08,
+    tokens: { uma_carta: 850, tres_cartas: 1_300 }
   }
 ];
 const MODEL = MODEL_CHAIN[MODEL_CHAIN.length - 1].id;
@@ -224,11 +226,12 @@ Regras obrigatórias:
 }
 
 function extractReading(result) {
-  let value = result?.response ?? result?.choices?.[0]?.message?.content;
+  let value = result?.response ?? result?.choices?.[0]?.message?.content ?? result?.choices?.[0]?.text ?? result?.result?.response ?? result?.output_text;
 
   if (typeof value === 'object' && value !== null) return value;
   if (typeof value !== 'string' || !value.trim()) {
-    throw new Error('O modelo retornou uma resposta vazia.');
+    const shape = JSON.stringify(result)?.slice(0, 300) ?? 'null';
+    throw new Error(`O modelo retornou uma resposta vazia. Forma recebida: ${shape}`);
   }
 
   value = value.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
@@ -268,10 +271,11 @@ async function interpret(request, env, origin, debug = false) {
   const failures = [];
 
   for (const model of MODEL_CHAIN) {
+    let raw = null;
     try {
       const options = {
         messages: buildMessages(payload, model),
-        [model.maxTokensParam || 'max_tokens']: payload.tipo === 'tres_cartas' ? 1_300 : 850,
+        [model.maxTokensParam || 'max_tokens']: model.tokens?.[payload.tipo] ?? 1_000,
         temperature: 0.55,
         top_p: 0.9
       };
@@ -281,6 +285,7 @@ async function interpret(request, env, origin, debug = false) {
       }
 
       const result = await ai.run(model.id, options);
+      raw = result;
 
       const interpretacao = extractReading(result);
       return json({
@@ -294,12 +299,16 @@ async function interpret(request, env, origin, debug = false) {
         ...(result?.usage ? { usage: result.usage } : {})
       }, 200, origin);
     } catch (error) {
-      failures.push(`${model.id}: ${error?.message || String(error)}`);
+      failures.push({
+        model: model.id,
+        error: error?.message || String(error),
+        raw: raw === null ? null : JSON.stringify(raw).slice(0, 700)
+      });
       console.error(`Modelo ${model.id} falhou:`, error);
     }
   }
 
-  throw new RequestError(`Nenhum modelo da cascata devolveu uma leitura válida. ${failures.join(' | ')}`, 502);
+  throw new RequestError(`Nenhum modelo da cascata devolveu uma leitura válida. ${failures.map(f => `${f.model}: ${f.error}`).join(' | ')}`, 502);
 }
 
 export default {
