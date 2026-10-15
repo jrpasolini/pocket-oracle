@@ -27,7 +27,7 @@ const MODEL_CHAIN = [
     tokens: { uma_carta: 850, tres_cartas: 1_300 }
   }
 ];
-const MODEL = MODEL_CHAIN[MODEL_CHAIN.length - 1].id;
+const MODEL = MODEL_CHAIN[0].id;
 
 // O site é publicado no GitHub Pages. Localhost permanece liberado para testes.
 const ALLOWED_ORIGINS = new Set([
