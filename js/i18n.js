@@ -10,11 +10,11 @@
 
     const TEXTS = {
         en: {
-            doc_title: 'Rider-Waite Tarot Almanac',
-            doc_description: 'Interactive almanac and oracle of the Rider-Waite Tarot, with all 78 cards.',
+            doc_title: 'Pocket Oracle — Rider-Waite Tarot',
+            doc_description: 'Pocket Oracle: a bilingual Rider-Waite Tarot grimoire with Gemma AI readings and optional ElevenLabs narration.',
 
             hero_kicker: 'Rider-Waite • Study • Reading',
-            hero_title: 'Tarot Almanac',
+            hero_title: 'Pocket Oracle',
             hero_subtitle: 'The symbols of the classic Rider-Waite gathered into an interactive grimoire for study, contemplation and intuitive draws.',
             chip_cards: '78 cards',
             chip_major: '22 Major Arcana',
@@ -92,7 +92,7 @@
             lang_toggle: 'PT',
             lang_toggle_aria: 'Mudar para português',
 
-            footer_brand: 'Rider-Waite Tarot Almanac',
+            footer_brand: 'Pocket Oracle',
             footer_copyright: '© 2026 Antonio Pasolini and Melissa Pasolini',
 
             filter_results: 'Results for',
@@ -110,11 +110,11 @@
             position_main: 'Main card'
         },
         pt: {
-            doc_title: 'Almanaque de Tarot Rider-Waite',
-            doc_description: 'Almanaque interativo e oráculo do Tarot Rider-Waite com as 78 cartas.',
+            doc_title: 'Pocket Oracle — Tarô Rider-Waite',
+            doc_description: 'Pocket Oracle: grimório bilíngue de Tarô Rider-Waite com leituras pela Gemma e narração opcional pela ElevenLabs.',
 
             hero_kicker: 'Rider-Waite • Estudo • Consulta',
-            hero_title: 'Almanaque de Tarot',
+            hero_title: 'Pocket Oracle',
             hero_subtitle: 'Os símbolos do clássico Rider-Waite reunidos em um grimório interativo para estudo, contemplação e tiragens intuitivas.',
             chip_cards: '78 cartas',
             chip_major: '22 Arcanos Maiores',
@@ -192,7 +192,7 @@
             lang_toggle: 'EN',
             lang_toggle_aria: 'Switch to English',
 
-            footer_brand: 'Almanaque de Tarot Rider-Waite',
+            footer_brand: 'Pocket Oracle',
             footer_copyright: '© 2026 Antonio Pasolini e Melissa Pasolini',
 
             filter_results: 'Resultados para',
