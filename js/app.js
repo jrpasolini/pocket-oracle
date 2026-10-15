@@ -485,15 +485,17 @@
         narrationButton.innerHTML = `<span aria-hidden="true">🔊</span> ${t('narrate_btn')}`;
         narrationButton.addEventListener('click', () => narrateReading(narrationButton, narrationRow));
 
-        narrationRow.appendChild(narrationButton);
-        aiReadingContent.appendChild(narrationRow);
+        if (data.narrationToken) {
+            narrationRow.appendChild(narrationButton);
+            aiReadingContent.appendChild(narrationRow);
+        }
 
         aiReadingResult.classList.remove('hidden');
         aiReadingResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     async function narrateReading(button, row) {
-        if (narrationInFlight || !lastReading?.interpretacao) return;
+        if (narrationInFlight || !lastReading?.narrationToken) return;
 
         narrationInFlight = true;
         button.disabled = true;
@@ -503,7 +505,7 @@
             const response = await fetch(NARRATE_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ leitura: lastReading.interpretacao })
+                body: JSON.stringify({ narrationToken: lastReading.narrationToken })
             });
 
             if (!response.ok) throw new Error(`narration-http-${response.status}`);
