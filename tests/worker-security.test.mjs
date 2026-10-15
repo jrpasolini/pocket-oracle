@@ -23,7 +23,7 @@ const sandbox = {
   Date: TestDate
 };
 
-runInNewContext(source + '\n;globalThis.testAPI = { validatePayload, validateReading, signNarration, authorizedNarrationText, narrationSecret, validateNarration };', sandbox);
+runInNewContext(source + '\n;globalThis.testAPI = { validatePayload, validateReading, signNarration, authorizedNarrationText, narrationSecret, validateNarration, composeNarration };', sandbox);
 const api = sandbox.testAPI;
 
 function payload() {
@@ -89,10 +89,56 @@ test('signed narration is accepted, tampering is rejected', async () => {
   const key = 'test-only-signing-key-with-32-chars-or-more';
   const token = await api.signNarration(reading(), key);
   assert.match(token, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
-  assert.match(await api.authorizedNarrationText(token, key), /Reflect on a new path/);
+  const authorized = await api.authorizedNarrationText(token, key);
+  assert.match(authorized.text, /Reflect on a new path/);
+  assert.equal(authorized.idioma, 'en');
   const parts = token.split('.');
   const changedPayload = (parts[0][0] === 'A' ? 'B' : 'A') + parts[0].slice(1) + '.' + parts[1];
   await assert.rejects(api.authorizedNarrationText(changedPayload, key));
+});
+
+
+test('three-card narration labels are localized independently of model output', async () => {
+  const enPayload = api.validatePayload({
+    tipo: 'tres_cartas', idioma: 'en', pergunta: 'What next?',
+    cartas: [{ nome: 'The Fool' }, { nome: 'The Magician' }, { nome: 'The Sun' }]
+  });
+  const output = api.validateReading({
+    titulo: 'Reading', abertura: 'An opening', resposta: 'Consider this',
+    orientacao: 'Act mindfully', sintese: 'A journey',
+    cartas: [
+      { posicao: 'Passado', carta: 'The Fool', interpretacao: 'What came before' },
+      { posicao: 'Presente', carta: 'The Magician', interpretacao: 'The present moment' },
+      { posicao: 'Futuro', carta: 'The Sun', interpretacao: 'What may follow' }
+    ]
+  }, enPayload.tipo, enPayload);
+  const key = 'test-only-signing-key-with-32-chars-or-more';
+  const token = await api.signNarration(output, key, enPayload.idioma);
+  const spoken = await api.authorizedNarrationText(token, key);
+  assert.equal(spoken.idioma, 'en');
+  assert.match(spoken.text, /Past: What came before/);
+  assert.match(spoken.text, /Present: The present moment/);
+  assert.match(spoken.text, /Future: What may follow/);
+  assert.doesNotMatch(spoken.text, /Passado|Presente|Futuro/);
+});
+
+test('Portuguese three-card narration keeps Portuguese labels', async () => {
+  const readingPt = {
+    ...reading(),
+    cartas: [
+      { posicao: 'Past', interpretacao: 'O início' },
+      { posicao: 'Present', interpretacao: 'O momento atual' },
+      { posicao: 'Future', interpretacao: 'O que vem depois' }
+    ]
+  };
+  delete readingPt.carta;
+  const key = 'test-only-signing-key-with-32-chars-or-more';
+  const token = await api.signNarration(readingPt, key, 'pt');
+  const spoken = await api.authorizedNarrationText(token, key);
+  assert.equal(spoken.idioma, 'pt');
+  assert.match(spoken.text, /Passado: O início/);
+  assert.match(spoken.text, /Presente: O momento atual/);
+  assert.match(spoken.text, /Futuro: O que vem depois/);
 });
 
 test('narration grant expires after ten minutes', async () => {
