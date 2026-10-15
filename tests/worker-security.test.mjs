@@ -67,7 +67,7 @@ test('narration no longer accepts arbitrary client text', () => {
 test('signed narration is accepted, tampering is rejected', async () => {
   const key = 'test-only-signing-key-with-32-chars-or-more';
   const token = await api.signNarration(reading(), key);
-  assert.match(token, /^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/);
+  assert.match(token, /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
   assert.match(await api.authorizedNarrationText(token, key), /Reflect on a new path/);
   const parts = token.split('.');
   const changedPayload = (parts[0][0] === 'A' ? 'B' : 'A') + parts[0].slice(1) + '.' + parts[1];
