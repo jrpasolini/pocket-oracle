@@ -278,8 +278,7 @@ function extractReading(result) {
 
   if (typeof value === 'object' && value !== null) return value;
   if (typeof value !== 'string' || !value.trim()) {
-    const shape = JSON.stringify(result)?.slice(0, 300) ?? 'null';
-    throw new Error(`O modelo retornou uma resposta vazia. Forma recebida: ${shape}`);
+    throw new Error('O modelo retornou uma resposta vazia.');
   }
 
   value = value.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
@@ -439,8 +438,7 @@ async function narrate(request, env, origin) {
   );
 
   if (!upstream.ok) {
-    const detail = await upstream.text().catch(() => '');
-    console.error('ElevenLabs falhou:', upstream.status, detail.slice(0, 300));
+    console.error('ElevenLabs falhou: status HTTP', upstream.status);
     throw new RequestError('Não foi possível gerar a narração agora.', 502);
   }
 
@@ -499,8 +497,8 @@ async function interpret(request, env, origin, debug = false) {
         ...(result?.usage ? { usage: result.usage } : {})
       }, 200, origin);
     } catch (error) {
-      failures.push({ model: model.id, error: error?.message || String(error) });
-      console.error(`Modelo ${model.id} falhou:`, error, raw === null ? '' : JSON.stringify(raw).slice(0, 700));
+      failures.push({ model: model.id, error: 'A resposta do modelo falhou na execução ou validação.' });
+      console.error(`Modelo ${model.id} falhou:`, error?.name || 'Error');
     }
   }
 
