@@ -8,6 +8,7 @@ const appSource = read('js/app.js');
 const css = read('css/styles.css');
 
 function node() {
+  const queried = new Map();
   const result = {
     className: 'hidden',
     value: '',
@@ -18,6 +19,10 @@ function node() {
     setAttribute() {},
     addEventListener(event, handler) { this.listeners[event] = handler; },
     appendChild(child) { this.children.push(child); },
+    querySelector(selector) {
+      if (!queried.has(selector)) queried.set(selector, node());
+      return queried.get(selector);
+    },
     querySelectorAll: () => [],
     contains: () => false
   };
@@ -49,13 +54,41 @@ function frontend(language) {
     if (!elements.has(id)) elements.set(id, node());
     return elements.get(id);
   };
+  const navDraw = node();
+  navDraw.dataset.view = 'random-draw-view';
+  let now = 0;
+  let nextTimerId = 0;
+  const scheduled = new Map();
+  const timers = {
+    pending: () => scheduled.size,
+    advance(ms) {
+      const end = now + ms;
+      while (true) {
+        let next = null;
+        for (const [id, entry] of scheduled) {
+          if (entry.at <= end && (!next || entry.at < next.at)) next = { id, ...entry };
+        }
+        if (!next) break;
+        scheduled.delete(next.id);
+        now = next.at;
+        next.callback();
+      }
+      now = end;
+    }
+  };
   const context = createContext({
+    setTimeout(callback, delay) {
+      const id = ++nextTimerId;
+      scheduled.set(id, { callback, at: now + delay });
+      return id;
+    },
+    clearTimeout(id) { scheduled.delete(id); },
     document: {
       readyState: 'loading',
       documentElement: {},
       getElementById: element,
       createElement: node,
-      querySelectorAll: () => [],
+      querySelectorAll: selector => selector === '[data-view]' ? [navDraw] : [],
       querySelector: () => null,
       addEventListener() {}
     },
@@ -67,7 +100,7 @@ function frontend(language) {
     runInContext(read(file), context);
   }
   runInContext(appSource, context);
-  return { elements, api: context.I18N };
+  return { elements, api: context.I18N, timers, navDraw };
 }
 
 function cards(frontend) {
@@ -140,4 +173,48 @@ test('all four gallery and detail labels have at least 4.5:1 text contrast', () 
     const ratio = (luminance(background) + 0.05) / (luminance(foreground) + 0.05);
     assert.ok(ratio >= 4.5, element + ' label contrast is ' + ratio.toFixed(2));
   }
+});
+
+test('switching languages clears localized explore filters and search queries', () => {
+  const view = frontend('pt');
+  const menu = view.elements.get('explore-menu').firstElementChild;
+  const majorArcana = menu.children.find(item => item.textContent === 'Arcanos Maiores');
+  assert.ok(majorArcana, 'Major Arcana filter must exist in Portuguese');
+  majorArcana.listeners.click();
+  assert.equal(cards(view).length, 22);
+
+  view.api.setLang('en');
+  assert.equal(cards(view).length, 78, 'Stale Portuguese category should be discarded');
+  assert.equal(view.elements.get('filter-info').classList.contains('hidden'), true);
+
+  const search = view.elements.get('search-input');
+  search.value = 'The Fool';
+  search.listeners.input();
+  assert.equal(cards(view).length, 1);
+  view.api.setLang('pt');
+  assert.equal(search.value, '');
+  assert.equal(cards(view).length, 78, 'Stale English query should be discarded');
+});
+
+test('resetting a draw cancels previous flip and completion timers', () => {
+  const view = frontend('en');
+  const question = view.elements.get('oracle-question');
+  question.value = 'What is next?';
+  question.listeners.input();
+
+  view.elements.get('draw-button').listeners.click();
+  assert.equal(view.timers.pending(), 2, 'One card needs flip and completion timers');
+
+  view.navDraw.listeners.click();
+  assert.equal(view.timers.pending(), 0, 'Reset must clear all pending draw timers');
+
+  view.elements.get('draw-three-button').listeners.click();
+  assert.equal(view.timers.pending(), 4, 'Three cards need three flips and completion');
+  view.timers.advance(1800);
+  assert.equal(view.elements.get('interpret-ai-button').disabled, true,
+    'An old completion timer must not enable interpretation early');
+  view.timers.advance(1800);
+  assert.equal(view.elements.get('interpret-ai-button').disabled, false,
+    'Only the current draw completion enables interpretation');
+  assert.equal(view.timers.pending(), 0);
 });

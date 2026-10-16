@@ -51,6 +51,9 @@
         I18N.onChange(() => {
             cards = buildDeck();
             currentDraw = currentDraw.map(card => cards[card.id] || card);
+            // Localized filter values and search terms must not survive a locale switch.
+            currentFilter = { type: null, value: null };
+            searchInput.value = '';
             renderCards();
             populateExploreMenu();
 
@@ -84,6 +87,7 @@
     let currentDetailFromDraw = false;
     let currentDraw = [];
     let currentDrawRevealed = false;
+    const drawTimers = new Set();
     let aiRequestInFlight = false;
 
     const escapeHtml = value => String(value ?? '')
@@ -311,7 +315,21 @@
         drawThreeButton.textContent = currentDraw.length === 3 ? t('draw_three_new') : t('draw_three');
     }
 
+    function cancelDrawTimers() {
+        drawTimers.forEach(timerId => window.clearTimeout(timerId));
+        drawTimers.clear();
+    }
+
+    function scheduleDrawTimer(callback, delay) {
+        const timerId = window.setTimeout(() => {
+            drawTimers.delete(timerId);
+            callback();
+        }, delay);
+        drawTimers.add(timerId);
+    }
+
     function resetDraw() {
+        cancelDrawTimers();
         currentDraw = [];
         currentDrawRevealed = false;
         shuffleContainer.innerHTML = '';
@@ -325,6 +343,7 @@
     }
 
     function drawCards(count) {
+        cancelDrawTimers();
         drawButton.disabled = true;
         drawThreeButton.disabled = true;
         (count === 1 ? drawButton : drawThreeButton).textContent = t('shuffling');
@@ -359,13 +378,13 @@
                     open();
                 }
             });
-            window.setTimeout(() => {
+            scheduleDrawTimer(() => {
                 flip.classList.add('is-flipped');
                 label.classList.remove('opacity-0');
             }, 500 + index * 900);
         });
 
-        window.setTimeout(() => {
+        scheduleDrawTimer(() => {
             currentDrawRevealed = true;
             drawButton.disabled = false;
             drawThreeButton.disabled = false;
