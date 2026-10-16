@@ -22,20 +22,18 @@ function translations() {
 
 test('privacy message explains local draw and explicit Cloudflare AI transfer in both languages', () => {
   const i18n = translations();
-  for (const [lang, browser, sent] of [
-    ['en', /browser/i, /sent to Cloudflare/i],
-    ['pt', /navegador/i, /enviados à Cloudflare/i]
+  for (const [lang, expected] of [
+    ['en', 'Your draw stays in the browser. If you use AI, your question and the names of the cards are sent to Cloudflare.'],
+    ['pt', 'Sua tiragem fica no navegador. Se usar a IA, sua pergunta e os nomes das cartas são enviados à Cloudflare.']
   ]) {
     i18n.setLang(lang);
     const notice = i18n.t('question_note');
-    assert.match(notice, browser);
-    assert.match(notice, sent);
-    assert.match(notice, /(?:question|pergunta)/i);
+    assert.equal(notice, expected);
     assert.ok(notice.length < 125, `Privacy notice is too long in ${lang}`);
   }
   const html = read('index.html');
   assert.match(html, /data-i18n="question_note"/);
-  assert.match(html, /question and card names sent to Cloudflare/i);
+  assert.match(html, /If you use AI, your question and the names of the cards are sent to Cloudflare\./);
 });
 
 test('honest 30–100-second estimate appears before and during AI interpretation in both locales', () => {

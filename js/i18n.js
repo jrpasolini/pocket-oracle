@@ -38,7 +38,7 @@
             draw_desc: 'Focus on your question, take a deep breath and choose a spread. The cards are revealed one by one.',
             question_label: 'Your question to the Tarot',
             question_placeholder: 'Write your question here. The draw works even without AI; the question is only sent if you ask for an interpretation.',
-            question_note: 'Your draw stays in the browser. Only when you use AI are your question and card names sent to Cloudflare.',
+            question_note: 'Your draw stays in the browser. If you use AI, your question and the names of the cards are sent to Cloudflare.',
 
             draw_one: 'Draw one card',
             draw_one_new: 'Draw another card',
@@ -143,7 +143,7 @@
             draw_desc: 'Concentre-se em sua pergunta, respire fundo e escolha uma tiragem. As cartas serão reveladas uma a uma.',
             question_label: 'Sua pergunta ao Tarot',
             question_placeholder: 'Escreva sua pergunta aqui. A tiragem funciona mesmo sem IA; a pergunta só será enviada se você solicitar uma interpretação.',
-            question_note: 'Sua tiragem fica no navegador. Só ao usar a IA, sua pergunta e os nomes das cartas são enviados à Cloudflare.',
+            question_note: 'Sua tiragem fica no navegador. Se usar a IA, sua pergunta e os nomes das cartas são enviados à Cloudflare.',
 
             draw_one: 'Tirar uma carta',
             draw_one_new: 'Tirar outra carta',
