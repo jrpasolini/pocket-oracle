@@ -91,8 +91,7 @@
             error_generic: 'The AI interpretation is temporarily unavailable. Your cards stay open for consultation, and you can try again later.',
             no_answer_title: 'The Tarot did not answer this time',
 
-            lang_toggle: 'PT',
-            lang_toggle_aria: 'Mudar para português',
+            language_label: 'Language',
 
             footer_brand: 'Pocket Oracle',
             footer_copyright: '© 2026 Antonio Pasolini and Melissa Pasolini',
@@ -193,8 +192,7 @@
             error_generic: 'A interpretação com IA está temporariamente indisponível. Suas cartas continuam abertas para consulta e você pode tentar novamente depois.',
             no_answer_title: 'O Tarot não respondeu desta vez',
 
-            lang_toggle: 'EN',
-            lang_toggle_aria: 'Switch to English',
+            language_label: 'Idioma',
 
             footer_brand: 'Pocket Oracle',
             footer_copyright: '© 2026 Antonio Pasolini e Melissa Pasolini',
@@ -256,10 +254,8 @@
         const html = document.documentElement;
         html.lang = current === 'pt' ? 'pt-BR' : 'en';
 
-        const toggles = document.querySelectorAll('[data-lang-toggle]');
-        toggles.forEach(toggle => {
-            toggle.textContent = t('lang_toggle');
-            toggle.setAttribute('aria-label', t('lang_toggle_aria'));
+        document.querySelectorAll('[data-lang-select]').forEach(button => {
+            button.setAttribute('aria-pressed', String(button.dataset.langSelect === current));
         });
     }
 
@@ -296,9 +292,9 @@
     function boot() {
         apply();
 
-        document.querySelectorAll('[data-lang-toggle]').forEach(toggle => {
-            toggle.addEventListener('click', () => {
-                setLang(current === 'pt' ? 'en' : 'pt');
+        document.querySelectorAll('[data-lang-select]').forEach(button => {
+            button.addEventListener('click', () => {
+                setLang(button.dataset.langSelect);
             });
         });
     }
