@@ -10,8 +10,11 @@ const INTERPRET_BUDGET_MS = 40_000;
 // um modelo lento consome tudo, o fallback nunca roda e o cliente estoura o
 // próprio timeout levando um 502. A chamada abandonada segue no servidor, mas
 // a resposta ao usuário fica limitada.
-const PER_ATTEMPT_MS = 18_000;
-const MIN_ATTEMPT_MS = 6_000;
+// 28 s medidos: o Gemma responde entre ~8 s e ~30 s. Com fatia curta ele era
+// cortado no meio e o fallback respondia por ele — o projeto anunciava Gemma e
+// entregava Llama. Os 40 s totais seguem valendo; o que sobra vai pro próximo.
+const PER_ATTEMPT_MS = 28_000;
+const MIN_ATTEMPT_MS = 8_000;
 
 // Cascata de modelos, em ordem de preferência.
 // `jsonMode: true`  = modelo na lista oficial de JSON Mode da Workers AI →
