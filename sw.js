@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'pocket-oracle-';
-const CACHE_NAME = 'pocket-oracle-v15-draw-timers-filter-reset-20261016';
+const CACHE_NAME = 'pocket-oracle-v16-privacy-loading-20261016';
 
 const CORE_ASSETS = [
   './',

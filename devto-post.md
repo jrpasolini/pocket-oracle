@@ -10,11 +10,11 @@ tags: devchallenge, hf26challenge, ai, opensource
 
 **Pocket Oracle** is a tarot reader you can carry in a browser tab — or install on your phone or your computer, because it's a PWA.
 
-You choose a spread — one card, or Past / Present / Future — write the question you actually want to ask, and the app answers with a structured reading: a title, an opening, an interpretation of each card in its position, a closing, and a quick "yes / maybe / no" with a justification. Every reading can be **read aloud**, in a real narrator voice, and the whole thing installs as a PWA and works in English or Portuguese.
+You choose a spread — one card, or Past / Present / Future — write the question you actually want to ask, and the app answers with a structured reading: a title, an opening, an interpretation of each card in its position, a closing, and practical guidance for reflection. Every reading can be **read aloud**, in a real narrator voice, and the whole thing installs as a PWA and works in English or Portuguese.
 
-**Who would pay for it?** Someone who already sells readings. A tarot reader on Etsy, at a fair, or on a Friday-night call doesn't lack knowledge — they lack *time*. Writing up a spread into something a client would be happy to receive, and then recording it in your own voice, is the tedious part of a side hustle that otherwise works. Pocket Oracle turns a spread into a written, spoken deliverable in under a minute, and the reader stays the author: they choose the spread, the question, and the voice.
+**Who would pay for it?** Someone who already sells readings. A tarot reader on Etsy, at a fair, or on a Friday-night call doesn't lack knowledge — they lack *time*. Writing up a spread into something a client would be happy to receive, and then recording it in your own voice, is the tedious part of a side hustle that otherwise works. Pocket Oracle turns a spread into a written reading, with optional audio narration. In production samples, responses took 12 to 72 seconds; the app allows up to 105 seconds before timing out. The reader stays in control: they choose the spread, the question, and whether to listen.
 
-The second customer is the one I actually gave it to first — someone who wants a private reading without an account, without a newsletter, and without their question leaving their own browser tab.
+The second customer is the person I gave it to first — someone who wants to explore the deck without an account or newsletter. Browsing and drawing cards work locally in the browser. Only if they request an AI interpretation does the browser send the question and drawn card names to a Cloudflare Worker for processing by Workers AI; optional spoken narration sends the authorized reading text to ElevenLabs.
 
 ## Demo
 

@@ -50,7 +50,6 @@ The deck itself, the search, the filters and the draws all work **offline** — 
 - `README-CLOUDFLARE-WORKER.md` — how to deploy the Worker
 - `sw.js` — service worker (offline support)
 - `icons/` — app icons at 180, 192 and 512 px
-- `cartas/` — reserved module for individual card pages
 
 ## Status
 

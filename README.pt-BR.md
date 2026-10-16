@@ -23,6 +23,5 @@ Grimório interativo com as 78 cartas do Tarot Rider-Waite, construído como um 
 - `cloudflare-worker.js`: Worker de interpretação simbólica com IA;
 - `README-CLOUDFLARE-WORKER.md`: instruções de publicação do Worker;
 - `icons/`: ícones próprios do aplicativo em 180, 192 e 512 pixels;
-- `cartas/`: módulo separado reservado para futuras páginas individuais.
 
 As imagens Rider-Waite utilizadas são de domínio público e foram obtidas a partir de uma coleção baseada no acervo do Wikimedia Commons.
