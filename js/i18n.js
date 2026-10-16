@@ -95,6 +95,10 @@
 
             footer_brand: 'Pocket Oracle',
             footer_copyright: '© 2026 Antonio Pasolini and Melissa Pasolini',
+            footer_readings: 'Readings powered by',
+            footer_narration: 'Narration by',
+            footer_explore: 'Explore:',
+            footer_domains: '.TECH domains',
 
             filter_results: 'Results for',
             clear_filter: 'Clear filter',
@@ -196,6 +200,10 @@
 
             footer_brand: 'Pocket Oracle',
             footer_copyright: '© 2026 Antonio Pasolini e Melissa Pasolini',
+            footer_readings: 'Leituras com',
+            footer_narration: 'Narração por',
+            footer_explore: 'Conheça:',
+            footer_domains: 'Domínios .TECH',
 
             filter_results: 'Resultados para',
             clear_filter: 'Limpar filtro',
