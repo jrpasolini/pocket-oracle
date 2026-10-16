@@ -1,5 +1,8 @@
 const SERVICE = 'tarot-rider-waite-ai';
-const VERSION = '1.8.0';
+// 1.9.0 — classificação de falhas (timeout de fatia × erro de provedor × resposta
+// inválida, com os códigos 3036/3040/5035 da Workers AI) e /health honesto: a
+// narração só aparece como pronta com as DUAS chaves presentes.
+const VERSION = '1.9.0';
 const MAX_BODY_LENGTH = 50_000;
 
 // Orçamento total do caminho de interpretação. O cliente desiste aos 105 s;
@@ -73,14 +76,37 @@ class RequestError extends Error {
   }
 }
 
+// Falha de LEITURA: a resposta do modelo chegou, mas não é o JSON/estrutura
+// esperados. É um erro de validação NOSSO, não do provedor — e é isso que
+// permite distinguir "resposta inválida" de "erro de provedor" no log.
+// As mensagens citam apenas o nome do campo: nunca o conteúdo do modelo, que
+// pode repetir a pergunta do consulente.
+class ReadingError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'ReadingError';
+  }
+}
+
+function newRequestId() {
+  return crypto.randomUUID().slice(0, 8);
+}
+
 function isAllowedOrigin(origin) {
   return !origin || allowedOrigins.has(origin);
 }
 
+// O timeout da fatia é uma classe de falha própria: o modelo não respondeu
+// dentro do seu tempo, o que NÃO é a mesma coisa que um erro do provedor.
 function withTimeout(promise, ms, label) {
   let timer;
   const expired = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`Tempo esgotado após ${ms} ms (${label}).`)), ms);
+    timer = setTimeout(() => {
+      const error = new Error(`Tempo esgotado após ${ms} ms (${label}).`);
+      error.name = 'TimeoutError';
+      error.sliceMs = ms;
+      reject(error);
+    }, ms);
   });
 
   return Promise.race([promise, expired]).finally(() => clearTimeout(timer));
@@ -311,11 +337,18 @@ function extractReading(result) {
 
   if (typeof value === 'object' && value !== null) return value;
   if (typeof value !== 'string' || !value.trim()) {
-    throw new Error('O modelo retornou uma resposta vazia.');
+    throw new ReadingError('O modelo retornou uma resposta vazia.');
   }
 
   value = value.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-  return JSON.parse(value);
+  // A mensagem crua do JSON.parse traz um trecho da saída do modelo, que pode
+  // conter a pergunta do consulente. Ela é descartada aqui de propósito: o log
+  // nunca deve guardar o texto da leitura.
+  try {
+    return JSON.parse(value);
+  } catch {
+    throw new ReadingError('A saída do modelo não é JSON válido.');
+  }
 }
 
 // Valida a ESTRUTURA da leitura, não só a sintaxe do JSON.
@@ -323,17 +356,17 @@ function extractReading(result) {
 // impede indevidamente o fallback para o próximo modelo da cascata.
 function validateReading(reading, type, payload) {
   if (!reading || typeof reading !== 'object' || Array.isArray(reading)) {
-    throw new Error('A leitura não é um objeto JSON.');
+    throw new ReadingError('A leitura não é um objeto JSON.');
   }
   const required = (value, field, limit) => {
     if (typeof value !== 'string' || !value.trim() || value.length > limit) {
-      throw new Error(`Campo de leitura inválido: ${field}.`);
+      throw new ReadingError(`Campo de leitura inválido: ${field}.`);
     }
     return value.trim();
   };
   const keys = (item, allowed) => {
     if (Object.keys(item).some(key => !allowed.includes(key))) {
-      throw new Error('A leitura contém campos inesperados.');
+      throw new ReadingError('A leitura contém campos inesperados.');
     }
   };
   const common = ['titulo', 'abertura', 'resposta', 'orientacao'];
@@ -345,11 +378,11 @@ function validateReading(reading, type, payload) {
 
   if (type === 'tres_cartas') {
     if (!Array.isArray(reading.cartas) || reading.cartas.length !== 3) {
-      throw new Error('A leitura exige exatamente três cartas.');
+      throw new ReadingError('A leitura exige exatamente três cartas.');
     }
     reading.cartas.forEach((item, index) => {
       if (!item || typeof item !== 'object' || Array.isArray(item)) {
-        throw new Error('Item inválido na leitura de três cartas.');
+        throw new ReadingError('Item inválido na leitura de três cartas.');
       }
       keys(item, ['posicao', 'carta', 'interpretacao']);
       required(item.posicao, 'posicao', 100);
@@ -362,7 +395,7 @@ function validateReading(reading, type, payload) {
     reading.sintese = required(reading.sintese, 'sintese', 2400);
   } else {
     if (!reading.carta || typeof reading.carta !== 'object' || Array.isArray(reading.carta)) {
-      throw new Error('A leitura exige uma carta válida.');
+      throw new ReadingError('A leitura exige uma carta válida.');
     }
     keys(reading.carta, ['nome', 'interpretacao']);
     required(reading.carta.nome, 'nome', 180);
@@ -522,7 +555,7 @@ function validateNarration(body) {
   return requiredText(body.narrationToken, 'Autorização de narração', NARRATION_TOKEN_LIMIT);
 }
 
-async function narrate(request, env, origin) {
+async function narrate(request, env, origin, requestId = newRequestId()) {
   const apiKey = env.ELEVENLABS_API_KEY;
   const secret = narrationSecret(env);
   if (!apiKey || !secret) throw new RequestError('A narração não está configurada.', 503);
@@ -549,7 +582,7 @@ async function narrate(request, env, origin) {
   );
 
   if (!upstream.ok) {
-    console.error('ElevenLabs falhou: status HTTP', upstream.status);
+    console.error(`[narrar ${requestId}] ElevenLabs falhou: status HTTP ${upstream.status}`);
     throw new RequestError('Não foi possível gerar a narração agora.', 502);
   }
 
@@ -559,7 +592,65 @@ async function narrate(request, env, origin) {
   });
 }
 
-async function interpret(request, env, origin, debug = false) {
+// --- Classificação de falhas do caminho de interpretação ---------------------
+// Códigos internos da Workers AI, confirmados na documentação oficial:
+// https://developers.cloudflare.com/workers-ai/platform/errors/ (consultado em 2026-10-16).
+// Só entram os três que mudam a leitura de um incidente:
+//   3036 (HTTP 429) "Account limited"  → cota diária gratuita (10.000 neurons) esgotada;
+//   3040 (HTTP 429) "Out of capacity"  → provedor sem capacidade no momento;
+//   5035 (HTTP 403) "Model requires Workers Paid plan" → o modelo exige plano pago.
+// Sem isto, timeout de fatia, erro de provedor e resposta inválida viram a
+// mesma linha de log.
+const WORKERS_AI_ERRORS = new Map([
+  [3036, { reason: 'account_limited' }],
+  [3040, { reason: 'out_of_capacity' }],
+  [5035, { reason: 'paid_plan_required' }]
+]);
+
+// A Cloudflare não documenta a forma exata do erro lançado pelo binding
+// `AI.run`: o código é procurado primeiro em campos estruturados e, em último
+// caso, no texto da mensagem do provedor.
+function workersAiErrorCode(error) {
+  for (const candidate of [error?.code, error?.error?.code, error?.cause?.code]) {
+    const code = Number(candidate);
+    if (WORKERS_AI_ERRORS.has(code)) return code;
+  }
+  const match = String(error?.message ?? '').match(/\b(3036|3040|5035)\b/);
+  return match ? Number(match[1]) : null;
+}
+
+// Registro de falha seguro para log e para o modo debug. Nunca carrega a
+// pergunta, o texto da leitura, tokens de narração nem valores de ambiente:
+// apenas a classe da falha e metadados. O `detail` só existe para os erros
+// criados por nós, cujas mensagens citam no máximo o nome de um campo.
+function describeFailure(error, model, sliceMs) {
+  const name = error?.name || 'Error';
+
+  if (name === 'TimeoutError') {
+    return { model: model.id, kind: 'timeout', reason: 'slice_timeout', name, sliceMs };
+  }
+
+  if (error instanceof ReadingError) {
+    return { model: model.id, kind: 'invalid_response', reason: 'invalid_reading', name, detail: error.message };
+  }
+
+  const code = workersAiErrorCode(error);
+  if (code) {
+    return { model: model.id, kind: 'provider', reason: WORKERS_AI_ERRORS.get(code).reason, name, code };
+  }
+
+  return { model: model.id, kind: 'provider', reason: 'provider_error', name };
+}
+
+function failureLine(requestId, failure) {
+  const parts = [`[interpretar ${requestId}] ${failure.model} falhou: kind=${failure.kind} reason=${failure.reason}`];
+  if (failure.code) parts.push(`code=${failure.code}`);
+  if (failure.detail) parts.push(`detail=${failure.detail}`);
+  if (failure.sliceMs) parts.push(`slice=${failure.sliceMs}ms`);
+  return parts.join(' ');
+}
+
+async function interpret(request, env, origin, debug = false, requestId = newRequestId()) {
   if (!request.headers.get('content-type')?.toLowerCase().includes('application/json')) {
     throw new RequestError('Envie a requisição como application/json.', 415);
   }
@@ -577,7 +668,7 @@ async function interpret(request, env, origin, debug = false) {
   for (const model of MODEL_CHAIN) {
     const remaining = deadline - Date.now();
     if (remaining < MIN_ATTEMPT_MS) {
-      failures.push({ model: model.id, name: 'BudgetExhausted', error: 'Orçamento esgotado antes da tentativa.' });
+      failures.push({ model: model.id, kind: 'budget', reason: 'budget_exhausted', name: 'BudgetExhausted' });
       break;
     }
 
@@ -618,16 +709,18 @@ async function interpret(request, env, origin, debug = false) {
         ...(result?.usage ? { usage: result.usage } : {})
       }, 200, origin);
     } catch (error) {
-      // A resposta ao usuário continua genérica; o log preserva o motivo real,
-      // o que era impossível distinguir antes (cota? timeout? JSON recusado?).
-      const name = error?.name || 'Error';
-      const message = error?.message || String(error);
-      failures.push({ model: model.id, name, error: 'execução ou validação falhou' });
-      console.error(`Modelo ${model.id} falhou [${name}]: ${message}`);
+      // A resposta ao usuário continua genérica e amigável; é o log que passa a
+      // distinguir timeout de fatia, erro do provedor (com o código da Workers
+      // AI) e resposta inválida — cada falha com o requestId da requisição.
+      const failure = describeFailure(error, model, slice);
+      failures.push(failure);
+      console.error(failureLine(requestId, failure));
     }
   }
 
-  console.error('Cascata falhou por completo:', failures);
+  // O texto do provedor e o conteúdo da leitura ficam FORA do log: aqui vão
+  // apenas as classes das falhas, para investigação.
+  console.error(`[interpretar ${requestId}] cascata falhou por completo:`, failures);
   throw new RequestError('Nenhum modelo conseguiu concluir a leitura agora.', 502);
 }
 
@@ -656,6 +749,11 @@ export default {
     }
 
     if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) {
+      // Honesto: `narrate` exige AS DUAS chaves (a da ElevenLabs e a de
+      // assinatura). Reportar `true` com apenas uma delas faria o cliente
+      // oferecer um botão de voz que só sabe falhar.
+      // A resposta só carrega booleanos e contagens — nunca valores de var.
+      const narrationReady = Boolean(env.ELEVENLABS_API_KEY) && Boolean(narrationSecret(env));
       return json({
         ok: true,
         service: SERVICE,
@@ -663,7 +761,7 @@ export default {
         model: MODEL,
         modelChain: MODEL_CHAIN.map(entry => entry.id),
         allowedOrigins: allowedOrigins.size,
-        narration: Boolean(env.ELEVENLABS_API_KEY),
+        narration: narrationReady,
         status: 'online',
         endpoints: { health: 'GET /health', interpretar: 'POST /interpretar', narrar: 'POST /narrar' }
       }, 200, origin);
@@ -673,22 +771,26 @@ export default {
       return json({ ok: false, error: 'Endpoint não encontrado.' }, 404, origin);
     }
 
+    const requestId = newRequestId();
+
     try {
       if (url.pathname === '/narrar') {
-        return await narrate(request, env, origin);
+        return await narrate(request, env, origin, requestId);
       }
-      return await interpret(request, env, origin, debug);
+      return await interpret(request, env, origin, debug, requestId);
     } catch (error) {
       const status = error instanceof RequestError ? error.status : 502;
       const isNarration = url.pathname === '/narrar';
-      const requestId = crypto.randomUUID().slice(0, 8);
       const details = error instanceof RequestError
         ? error.message
         : (isNarration
           ? 'O serviço de voz não conseguiu concluir a narração agora.'
           : 'O serviço de IA não conseguiu concluir a leitura agora.');
 
-      console.error(`Falha em ${url.pathname} [${requestId}]:`, error);
+      // Só mensagens que nós escrevemos vão para o log: um erro inesperado pode
+      // carregar, no próprio texto, dados do consulente.
+      const logged = error instanceof RequestError ? error.message : 'erro inesperado';
+      console.error(`[${requestId}] falha em ${url.pathname}: ${error?.name || 'Error'} — ${logged}`);
       return json({
         ok: false,
         error: isNarration ? 'Não foi possível gerar a narração.' : 'Não foi possível realizar a interpretação.',
