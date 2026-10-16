@@ -1,11 +1,20 @@
 name = "tarot-rider-waite-ai"
 main = "cloudflare-worker.js"
-compatibility_date = "2026-10-15"
+compatibility_date = "2026-09-06"
 
 # Binding da Workers AI. O Worker aceita tanto `env["tarot-ai"]` (nome usado
 # no painel) quanto o fallback `env.AI`.
 [ai]
 binding = "tarot-ai"
+
+# Variáveis em texto puro que JÁ existem em produção. Precisam estar aqui:
+# um `wrangler deploy` substitui as vars do script pelas do arquivo, então
+# omiti-las apagaria a allowlist de CORS e a voz da narração.
+# Os segredos (ELEVENLABS_API_KEY, NARRATION_SIGNING_KEY) são gerenciados
+# separadamente e sobrevivem ao deploy.
+[vars]
+ALLOWED_ORIGINS = "https://pocket-oracle-0saq.onrender.com"
+ELEVENLABS_VOICE_ID = "RGymW84CSmfVugnA5tvA"
 
 [observability]
 enabled = true

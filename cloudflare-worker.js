@@ -1,19 +1,21 @@
 const SERVICE = 'tarot-rider-waite-ai';
-const VERSION = '1.7.0';
+const VERSION = '1.8.0';
 const MAX_BODY_LENGTH = 50_000;
 
-// Orçamento total do caminho de interpretação. O cliente desiste aos 45 s;
+// Orçamento total do caminho de interpretação. O cliente desiste aos 105 s;
 // o Worker não deve continuar tentando modelos depois disso.
-const INTERPRET_BUDGET_MS = 70_000;
+// 100 s = fatia do Gemma (60 s) + folga real para o backup (Llama ~22-30 s).
+const INTERPRET_BUDGET_MS = 100_000;
 
 // Fatia por tentativa. Sem isto o orçamento só é conferido ENTRE tentativas:
 // um modelo lento consome tudo, o fallback nunca roda e o cliente estoura o
 // próprio timeout levando um 502. A chamada abandonada segue no servidor, mas
 // a resposta ao usuário fica limitada.
-// 28 s medidos: o Gemma responde entre ~8 s e ~30 s. Com fatia curta ele era
-// cortado no meio e o fallback respondia por ele — o projeto anunciava Gemma e
-// entregava Llama. Os 40 s totais seguem valendo; o que sobra vai pro próximo.
-const PER_ATTEMPT_MS = 50_000;
+// Medido: o Gemma responde entre ~8 s e ~57 s (3 cartas). A fatia de 60 s é o
+// teto definido pelo Junior: o Gemma é quem busca a resposta e o Llama é o
+// backup explícito. Com fatia curta ele era cortado no meio e o fallback
+// respondia por ele — o projeto anunciava Gemma e entregava Llama.
+const PER_ATTEMPT_MS = 60_000;
 const MIN_ATTEMPT_MS = 8_000;
 
 // Cascata de modelos, em ordem de preferência.
