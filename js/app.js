@@ -618,7 +618,7 @@
         const controller = new AbortController();
         const requestId = ++readingRequestId;
         readingRequestController = controller;
-        const timeoutId = window.setTimeout(() => controller.abort(), 45000);
+        const timeoutId = window.setTimeout(() => controller.abort(), 75000);
 
         try {
             const response = await fetch(AI_ENDPOINT, {

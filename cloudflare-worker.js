@@ -4,7 +4,7 @@ const MAX_BODY_LENGTH = 50_000;
 
 // Orçamento total do caminho de interpretação. O cliente desiste aos 45 s;
 // o Worker não deve continuar tentando modelos depois disso.
-const INTERPRET_BUDGET_MS = 40_000;
+const INTERPRET_BUDGET_MS = 70_000;
 
 // Fatia por tentativa. Sem isto o orçamento só é conferido ENTRE tentativas:
 // um modelo lento consome tudo, o fallback nunca roda e o cliente estoura o
@@ -13,7 +13,7 @@ const INTERPRET_BUDGET_MS = 40_000;
 // 28 s medidos: o Gemma responde entre ~8 s e ~30 s. Com fatia curta ele era
 // cortado no meio e o fallback respondia por ele — o projeto anunciava Gemma e
 // entregava Llama. Os 40 s totais seguem valendo; o que sobra vai pro próximo.
-const PER_ATTEMPT_MS = 28_000;
+const PER_ATTEMPT_MS = 50_000;
 const MIN_ATTEMPT_MS = 8_000;
 
 // Cascata de modelos, em ordem de preferência.
