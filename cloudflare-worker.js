@@ -1,10 +1,17 @@
 const SERVICE = 'tarot-rider-waite-ai';
-const VERSION = '1.6.0';
+const VERSION = '1.7.0';
 const MAX_BODY_LENGTH = 50_000;
 
 // Orçamento total do caminho de interpretação. O cliente desiste aos 45 s;
 // o Worker não deve continuar tentando modelos depois disso.
 const INTERPRET_BUDGET_MS = 40_000;
+
+// Fatia por tentativa. Sem isto o orçamento só é conferido ENTRE tentativas:
+// um modelo lento consome tudo, o fallback nunca roda e o cliente estoura o
+// próprio timeout levando um 502. A chamada abandonada segue no servidor, mas
+// a resposta ao usuário fica limitada.
+const PER_ATTEMPT_MS = 18_000;
+const MIN_ATTEMPT_MS = 6_000;
 
 // Cascata de modelos, em ordem de preferência.
 // `jsonMode: true`  = modelo na lista oficial de JSON Mode da Workers AI →
@@ -29,12 +36,29 @@ const MODEL_CHAIN = [
 ];
 const MODEL = MODEL_CHAIN[0].id;
 
-// O site é publicado no GitHub Pages. Localhost permanece liberado para testes.
-const ALLOWED_ORIGINS = new Set([
+// Origens liberadas. As fixas cobrem o GitHub Pages e o desenvolvimento local.
+// Qualquer outra (Render, domínio próprio) entra pela variável de ambiente
+// `ALLOWED_ORIGINS`, separada por vírgula — trocar de casa não exige mexer no código.
+const DEFAULT_ALLOWED_ORIGINS = new Set([
   'https://jrpasolini.github.io',
+  'https://jrpasolini.tech',
+  'https://www.jrpasolini.tech',
   'http://localhost:8000',
   'http://127.0.0.1:8000'
 ]);
+
+let allowedOrigins = DEFAULT_ALLOWED_ORIGINS;
+
+function primeAllowedOrigins(env) {
+  const raw = env?.ALLOWED_ORIGINS;
+  const extra = raw
+    ? String(raw).split(',').map(value => value.trim()).filter(Boolean)
+    : [];
+
+  allowedOrigins = extra.length
+    ? new Set([...DEFAULT_ALLOWED_ORIGINS, ...extra])
+    : DEFAULT_ALLOWED_ORIGINS;
+}
 
 class RequestError extends Error {
   constructor(message, status = 400) {
@@ -45,7 +69,16 @@ class RequestError extends Error {
 }
 
 function isAllowedOrigin(origin) {
-  return !origin || ALLOWED_ORIGINS.has(origin);
+  return !origin || allowedOrigins.has(origin);
+}
+
+function withTimeout(promise, ms, label) {
+  let timer;
+  const expired = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Tempo esgotado após ${ms} ms (${label}).`)), ms);
+  });
+
+  return Promise.race([promise, expired]).finally(() => clearTimeout(timer));
 }
 
 function responseHeaders(origin) {
@@ -537,10 +570,13 @@ async function interpret(request, env, origin, debug = false) {
   const deadline = Date.now() + INTERPRET_BUDGET_MS;
 
   for (const model of MODEL_CHAIN) {
-    if (Date.now() > deadline) {
-      failures.push({ model: model.id, error: 'Orçamento de tempo esgotado antes da tentativa.' });
+    const remaining = deadline - Date.now();
+    if (remaining < MIN_ATTEMPT_MS) {
+      failures.push({ model: model.id, name: 'BudgetExhausted', error: 'Orçamento esgotado antes da tentativa.' });
       break;
     }
+
+    const slice = Math.min(PER_ATTEMPT_MS, remaining);
 
     let raw = null;
     try {
@@ -555,7 +591,7 @@ async function interpret(request, env, origin, debug = false) {
         options.response_format = { type: 'json_schema', json_schema: readingSchema(payload.tipo) };
       }
 
-      const result = await ai.run(model.id, options);
+      const result = await withTimeout(ai.run(model.id, options), slice, model.id);
       raw = result;
 
       const interpretacao = validateReading(extractReading(result), payload.tipo, payload);
@@ -577,8 +613,12 @@ async function interpret(request, env, origin, debug = false) {
         ...(result?.usage ? { usage: result.usage } : {})
       }, 200, origin);
     } catch (error) {
-      failures.push({ model: model.id, error: 'A resposta do modelo falhou na execução ou validação.' });
-      console.error(`Modelo ${model.id} falhou:`, error?.name || 'Error');
+      // A resposta ao usuário continua genérica; o log preserva o motivo real,
+      // o que era impossível distinguir antes (cota? timeout? JSON recusado?).
+      const name = error?.name || 'Error';
+      const message = error?.message || String(error);
+      failures.push({ model: model.id, name, error: 'execução ou validação falhou' });
+      console.error(`Modelo ${model.id} falhou [${name}]: ${message}`);
     }
   }
 
@@ -588,6 +628,8 @@ async function interpret(request, env, origin, debug = false) {
 
 export default {
   async fetch(request, env) {
+    primeAllowedOrigins(env);
+
     const origin = request.headers.get('origin');
     if (!isAllowedOrigin(origin)) {
       return json({ ok: false, error: 'Origem não autorizada.' }, 403, origin);
@@ -615,6 +657,7 @@ export default {
         version: VERSION,
         model: MODEL,
         modelChain: MODEL_CHAIN.map(entry => entry.id),
+        allowedOrigins: allowedOrigins.size,
         narration: Boolean(env.ELEVENLABS_API_KEY),
         status: 'online',
         endpoints: { health: 'GET /health', interpretar: 'POST /interpretar', narrar: 'POST /narrar' }
