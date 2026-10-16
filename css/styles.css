@@ -1426,3 +1426,55 @@ button,
     border-radius: 3px;
     box-shadow: 0 1px 3px rgba(40, 18, 10, .2);
 }
+
+/* Discreet, readable technology credits below the authorship. */
+.footer-credits {
+    margin: 1rem auto 0;
+    max-width: 42rem;
+    color: #665044;
+    font-size: .85rem;
+    line-height: 1.8;
+}
+
+.footer-credit-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    gap: .15rem .45rem;
+    margin: .25rem 0 0;
+}
+
+.footer-credit-line > span:not(.footer-credit-divider) {
+    max-width: 100%;
+}
+
+.footer-credits a {
+    color: #743c2e;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: rgba(116, 60, 46, .35);
+    text-underline-offset: .2em;
+}
+
+.footer-credits a:hover {
+    color: #4e241c;
+    text-decoration-color: currentColor;
+}
+
+.footer-credits a:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 4px;
+    border-radius: .2rem;
+}
+
+@media (max-width: 480px) {
+    .footer-credit-line:first-child {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .footer-credit-line:first-child .footer-credit-divider {
+        display: none;
+    }
+}
