@@ -102,13 +102,23 @@
     const joinList = value => list(value).map(escapeHtml).join(', ');
 
     function cardNumber(card) {
-        if (card.naipe === 'Arcanos Maiores') return String(card.numero).padStart(2, '0');
+        if (['arcanos maiores', 'major arcana'].includes(normalize(card.naipe))) {
+            return String(card.numero).padStart(2, '0');
+        }
         const labels = { 1: t('rank_ace'), 11: t('rank_page'), 12: t('rank_knight'), 13: t('rank_queen'), 14: t('rank_king') };
         return labels[card.numero] || card.numero;
     }
 
     function elementClass(value) {
-        return normalize(value).replace(/[^a-z0-9]+/g, '-');
+        // Display names are localized; visual themes use stable Portuguese keys.
+        const key = normalize(value).trim();
+        const elements = {
+            ar: 'ar', air: 'ar',
+            agua: 'agua', water: 'agua',
+            fogo: 'fogo', fire: 'fogo',
+            terra: 'terra', earth: 'terra'
+        };
+        return elements[key] || key.replace(/[^a-z0-9]+/g, '-');
     }
 
     function searchableText(card) {
@@ -206,7 +216,7 @@
                 <div class="oracle-card-frame">
                     <img src="${escapeHtml(card.imagem)}" alt="${escapeHtml(card.nome)}" class="w-full h-auto rounded-xl" loading="lazy">
                     <span class="card-number-badge">${escapeHtml(cardNumber(card))}</span>
-                    <span class="card-element-label"><span class="element-inline-dot element-${cls}"></span>${escapeHtml(card.elemento)}</span>
+                    <span class="card-element-label element-label-${cls}"><span aria-hidden="true" class="element-inline-dot element-${cls}"></span>${escapeHtml(card.elemento)}</span>
                 </div>
                 <div class="pt-3 px-1">
                     <h3 class="font-playfair text-xl card-title-home">${escapeHtml(card.nome)}</h3>

@@ -1478,3 +1478,47 @@ button,
         display: none;
     }
 }
+
+
+/* Readable element labels share the same palette in both languages. */
+.element-pill,
+.card-element-label {
+    border: 1px solid transparent;
+}
+
+.element-pill.element-ar,
+.card-element-label.element-label-ar {
+    background: #fffefa;
+    color: #454545;
+    border-color: #aaa69e;
+}
+
+.element-pill.element-agua,
+.card-element-label.element-label-agua {
+    background: #e8f3fa;
+    color: #174e70;
+    border-color: #7898ad;
+}
+
+.element-pill.element-fogo,
+.card-element-label.element-label-fogo {
+    background: #fff0e6;
+    color: #8b3e27;
+    border-color: #bd8c77;
+}
+
+.element-pill.element-terra,
+.card-element-label.element-label-terra {
+    background: #eff2e5;
+    color: #3f522e;
+    border-color: #94a181;
+}
+
+.element-inline-dot.element-ar {
+    background: #fffefa;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .16), inset 0 0 0 1px #77736c;
+}
+
+.element-inline-dot.element-terra {
+    background: #52633c;
+}
