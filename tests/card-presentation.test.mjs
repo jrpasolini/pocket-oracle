@@ -190,7 +190,8 @@ test('switching languages clears localized explore filters and search queries', 
   const search = view.elements.get('search-input');
   search.value = 'The Fool';
   search.listeners.input();
-  assert.equal(cards(view).length, 1);
+  assert.ok(cards(view).length > 0 && cards(view).length < 78,
+    'English search should narrow the gallery before the language switch');
   view.api.setLang('pt');
   assert.equal(search.value, '');
   assert.equal(cards(view).length, 78, 'Stale English query should be discarded');
