@@ -31,10 +31,11 @@ test('privacy message explains local draw and explicit Cloudflare AI transfer in
     assert.match(notice, browser);
     assert.match(notice, sent);
     assert.match(notice, /(?:question|pergunta)/i);
+    assert.ok(notice.length < 125, `Privacy notice is too long in ${lang}`);
   }
   const html = read('index.html');
   assert.match(html, /data-i18n="question_note"/);
-  assert.match(html, /question and drawn card names are sent to Cloudflare/i);
+  assert.match(html, /question and card names sent to Cloudflare/i);
 });
 
 test('honest 30–100-second estimate appears before and during AI interpretation in both locales', () => {
@@ -44,11 +45,12 @@ test('honest 30–100-second estimate appears before and during AI interpretatio
     for (const key of ['hint_ready', 'loading_desc']) {
       assert.match(i18n.t(key), /30/);
       assert.match(i18n.t(key), /100/);
+      if (key === 'loading_desc') assert.ok(i18n.t(key).length < 80, `Loading message too long in ${lang}`);
     }
   }
   const html = read('index.html');
   assert.match(html, /data-i18n="loading_desc"/);
-  assert.match(html, /30 to 100 seconds/);
+  assert.match(html, /AI is interpreting your spread\. This may take 30 to 100 seconds\./);
 });
 
 test('unused standalone card prototypes are absent from the deployed app', () => {

@@ -38,7 +38,7 @@
             draw_desc: 'Focus on your question, take a deep breath and choose a spread. The cards are revealed one by one.',
             question_label: 'Your question to the Tarot',
             question_placeholder: 'Write your question here. The draw works even without AI; the question is only sent if you ask for an interpretation.',
-            question_note: 'Your question and draw stay in the browser until you request an AI interpretation. Then the question and drawn card names are sent to Cloudflare.',
+            question_note: 'Your draw stays in the browser. Only when you use AI are your question and card names sent to Cloudflare.',
 
             draw_one: 'Draw one card',
             draw_one_new: 'Draw another card',
@@ -53,7 +53,7 @@
             hint_ready: 'AI is only called when you press the button. An interpretation can take around 30 to 100 seconds.',
 
             loading_title: 'Consulting the Tarot…',
-            loading_desc: 'The AI is interpreting your spread. This can take around 30 to 100 seconds, especially when a fallback model is needed.',
+            loading_desc: 'AI is interpreting your spread. This may take 30 to 100 seconds.',
 
             reading_kicker: '✦ Tarot reading',
             reading_fallback_title: 'Interpretation of the spread',
@@ -143,7 +143,7 @@
             draw_desc: 'Concentre-se em sua pergunta, respire fundo e escolha uma tiragem. As cartas serão reveladas uma a uma.',
             question_label: 'Sua pergunta ao Tarot',
             question_placeholder: 'Escreva sua pergunta aqui. A tiragem funciona mesmo sem IA; a pergunta só será enviada se você solicitar uma interpretação.',
-            question_note: 'Sua pergunta e a tiragem ficam no navegador até você solicitar uma interpretação com IA. Nesse caso, a pergunta e os nomes das cartas são enviados à Cloudflare.',
+            question_note: 'Sua tiragem fica no navegador. Só ao usar a IA, sua pergunta e os nomes das cartas são enviados à Cloudflare.',
 
             draw_one: 'Tirar uma carta',
             draw_one_new: 'Tirar outra carta',
@@ -158,7 +158,7 @@
             hint_ready: 'A IA só é acionada quando você apertar o botão. A interpretação pode levar cerca de 30 a 100 segundos.',
 
             loading_title: 'Consultando o Tarot…',
-            loading_desc: 'A IA está interpretando sua tiragem. Isso pode levar cerca de 30 a 100 segundos, especialmente se outro modelo precisar assumir.',
+            loading_desc: 'A IA está interpretando sua tiragem. Pode levar de 30 a 100 segundos.',
 
             reading_kicker: '✦ Leitura do Tarot',
             reading_fallback_title: 'Interpretação da tiragem',
