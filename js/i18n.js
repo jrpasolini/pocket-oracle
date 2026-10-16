@@ -94,7 +94,7 @@
             language_label: 'Language',
 
             footer_brand: 'Pocket Oracle',
-            footer_copyright: '© 2026 Antonio Pasolini and Melissa Pasolini',
+            footer_copyright: '© 2026 Antonio Pasolini and Melissa',
             footer_readings: 'Readings powered by',
             footer_narration: 'Narration by',
             footer_explore: 'Explore:',
@@ -199,7 +199,7 @@
             language_label: 'Idioma',
 
             footer_brand: 'Pocket Oracle',
-            footer_copyright: '© 2026 Antonio Pasolini e Melissa Pasolini',
+            footer_copyright: '© 2026 Antonio Pasolini e Melissa',
             footer_readings: 'Leituras com',
             footer_narration: 'Narração por',
             footer_explore: 'Conheça:',

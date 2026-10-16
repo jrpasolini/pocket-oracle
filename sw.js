@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'pocket-oracle-';
-const CACHE_NAME = 'pocket-oracle-v13-card-badges-20261015';
+const CACHE_NAME = 'pocket-oracle-v14-name-align-20261016';
 
 const CORE_ASSETS = [
   './',

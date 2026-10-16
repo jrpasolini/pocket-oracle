@@ -75,4 +75,4 @@ Three concrete reasons, in the order they bit me.
 
 ## My Agent Session
 
-This project was built in collaboration with an AI agent, and the post itself was drafted and reviewed the same way — disclosed rather than hidden. The measurement above exists *because* of that pairing: the agent kept testing production while I kept assuming it worked.
+This project was built by **Antonio Pasolini** in collaboration with **Melissa**, an AI agent, and the post itself was drafted and reviewed the same way — disclosed rather than hidden. The measurement above exists *because* of that pairing: the agent kept testing production while I kept assuming it worked.
