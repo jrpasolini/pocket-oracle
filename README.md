@@ -51,6 +51,16 @@ The deck itself, the search, the filters and the draws all work **offline** — 
 - `sw.js` — service worker (offline support)
 - `icons/` — app icons at 180, 192 and 512 px
 
+## Accessibility experience (development branch)
+
+The Sun/Moon control switches between the existing parchment theme and an optional dark palette. Preferences are stored locally in the browser, independently of the PT/EN selection.
+
+A second control reads selected text (when selected inside the visible content) or a short description of the active view using the browser's built-in `speechSynthesis`. On a card detail page, **Listen to this card** reads the card text. The app does not request microphone access or call ElevenLabs for this feature. The quality, availability, and offline behavior of system voices vary by browser and operating system; some voices may rely on network services.
+
+The generated AI interpretation remains a separate opt-in ElevenLabs narration experience, with a small provider credit. Each interpretation attributes the actual backend model returned by `/interpretar` (Gemma or Llama). Browser read-aloud stops when a premium narration starts or when the language/view changes.
+
+These features complement, **not replace**, operating-system screen readers such as NVDA, VoiceOver, and TalkBack. Keyboard, visual contrast, device voice support, and screen-reader usability require manual testing before any accessibility conformance claims.
+
 ## Status
 
 Work in progress, being built in public during the challenge week.
