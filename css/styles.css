@@ -1653,6 +1653,31 @@ html[data-theme="dark"] .toolbar-button-primary {
     background: #a14e32;
     color: #fffaf2;
 }
+/* The two draw actions are equally available choices, not
+   primary/disabled states. Give both the same active treatment on Moon theme. */
+html[data-theme="dark"] .draw-button-primary,
+html[data-theme="dark"] .draw-button-secondary {
+    background: linear-gradient(135deg, #8e2e2e, #b0672d);
+    color: #fff8f0;
+    border: 0;
+}
+
+/* Only an actual disabled attribute uses the subdued appearance
+   while the shuffle animation is running. Keep its label readable. */
+html[data-theme="dark"] .draw-button:disabled {
+    background: #414b5e;
+    color: #fff8f0;
+    opacity: 1;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+html[data-theme="dark"] .draw-button:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+}
+
 html[data-theme="dark"] .home-panel,
 html[data-theme="dark"] .draw-panel {
     background: linear-gradient(145deg, rgba(39,46,60,.99), rgba(28,34,45,.99));
