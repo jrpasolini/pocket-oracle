@@ -14,7 +14,10 @@
    - **Permissão necessária:** escopo de **Zona → Workers Routes → Editar**, com a zona `jrpasolini.tech`.
    - **Rollback da rota:** `PUT .../workers/routes/{route_id}` com `{"pattern":"*.jrpasolini.tech/*","script":"pocket-tarot-ai","request_limit_fail_open":false}` — isso **reabre o curinga** (estado anterior a 16/10; evitar, pois fica mais amplo que o WAF).
    - **Histórico:** em 16/10 a zona estava com `*.jrpasolini.tech/*` (curinga). A rota foi **estreitada** para `api.jrpasolini.tech/*` via `PUT` no **próprio ID** (`e9ecc359…`), preservando o vínculo com o Worker e o fail closed. O WAF cobre apenas o hostname `api`.
-5. O DNS proxied da migração aponta, segundo o handover, para `pocket-tarot-ai.antonio-pasolini.workers.dev`. Embora a rota estivesse funcional, essa dependência deve ser reavaliada; prefira Custom Domain nativo após planejar uma migração reversível.
+5. **O DNS é um CNAME proxied `api` → `pocket-tarot-ai.antonio-pasolini.workers.dev` — e isso é INTENCIONAL, não um defeito.** O alvo **precisa resolver em DNS**: a rota intercepta o hostname, mas o edge ainda precisa de uma origem resolvível. O host `*.workers.dev` continua **existindo no DNS** mesmo com a rota de serviço desabilitada — é isso que faz o desenho funcionar.
+   - ⚠️ **Verificado em 16/10 (22h50):** trocar o CNAME por um registro "buraco negro" (`AAAA → 100::`, proxied) **derruba a API com 502** — o edge tenta a origem e falha. Revertido em seguida.
+   - O caminho "limpo" seria o **Custom Domain nativo**, que **já foi tentado e travou** publicando o mesmo placeholder `100::` (registro somente-leitura, sem servir). Migrar exige **janela de manutenção** e rollback planejado.
+   - **Não tente trocar o registro por um endereço não-roteável.**
 6. `workers_dev = false` e `preview_urls = false` são a configuração desejada. Confirme via API que nenhuma URL alternativa continua atendendo requisições.
 
 ## Alterações no código e testes
