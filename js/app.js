@@ -219,6 +219,9 @@
             item.className = 'oracle-card text-center cursor-pointer group';
             item.tabIndex = 0;
             item.setAttribute('role', 'button');
+            // Card names and suit labels are localized by our own PT/EN layer.
+            // Prevent browser auto-translation from turning "Cups" into "xícaras".
+            item.setAttribute('translate', 'no');
             item.setAttribute('aria-label', `${t('open_card')} ${card.nome}`);
             item.innerHTML = `
                 <div class="oracle-card-frame">
@@ -304,7 +307,7 @@
             <div class="md:col-span-2 space-y-5">
                 <div>
                     <div class="flex flex-wrap items-center gap-3 mb-3"><span class="element-pill element-${cls}">${escapeHtml(card.elemento)}</span><span class="text-sm opacity-75">${escapeHtml(card.naipe)} • ${escapeHtml(cardNumber(card))}</span></div>
-                    <h2 class="font-playfair text-4xl md:text-5xl leading-tight">${escapeHtml(card.nome)}</h2>
+                    <h2 translate="no" class="font-playfair text-4xl md:text-5xl leading-tight">${escapeHtml(card.nome)}</h2>
                 </div>
                 ${detailSection(t('detail_keywords'), `<p class="italic">${joinList(card.palavras_chave)}.</p>`)}
                 ${detailSection(t('detail_reversed'), `<p class="italic">${joinList(card.palavras_chave_invertido)}.</p>`)}
@@ -526,6 +529,7 @@
                 const name = document.createElement('h3');
                 name.className = 'font-playfair text-2xl';
                 name.textContent = item.carta || '';
+                name.setAttribute('translate', 'no');
 
                 const interpretation = document.createElement('p');
                 interpretation.className = 'ai-reading-text';
