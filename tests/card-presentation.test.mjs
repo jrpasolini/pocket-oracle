@@ -269,7 +269,8 @@ test('all zodiac filters match individual tokens in compound metadata, never the
       const sign = option.textContent;
       option.listeners.click();
       const found = cards(view).map(card => card.image);
-      const expected = deck.filter(card =>
+      // Convert VM-realm deck array to a host-realm array before strict comparison.
+      const expected = Array.from(deck).filter(card =>
         zodiacTerms(card.signo).includes(zodiacTerms(sign)[0]))
         .map(card => card.imagem);
       assert.deepEqual(found, expected, lang + '/' + sign);
