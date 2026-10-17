@@ -313,3 +313,39 @@ test('the separate planet filter still works for planetary-only correspondence c
   const magician = view.api.cards().find(card => card.nome === 'O Mago');
   assert.ok(cards(view).some(card => card.image === magician.imagem));
 });
+
+
+test('moon theme draw actions use the same enabled color and a distinct disabled style', () => {
+  const html = read('index.html');
+  const one = html.match(/<button id="draw-button"[^>]+>/)?.[0];
+  const three = html.match(/<button id="draw-three-button"[^>]+>/)?.[0];
+  assert.ok(one && three, 'Both draw controls are present');
+  assert.doesNotMatch(one, /\sdisabled(?:\s|=|>)/i);
+  assert.doesNotMatch(three, /\sdisabled(?:\s|=|>)/i);
+
+  const sharedSelector =
+    'html[data-theme="dark"] .draw-button-primary,\n' +
+    'html[data-theme="dark"] .draw-button-secondary {';
+  const sharedStart = css.lastIndexOf(sharedSelector);
+  assert.ok(sharedStart >= 0, 'Both active controls must share one dark-theme declaration');
+  const activeRule = css.slice(sharedStart, css.indexOf('}', sharedStart));
+  const gradient = activeRule.match(/background:\s*linear-gradient\(135deg,\s*#([a-f\d]{6}),\s*#([a-f\d]{6})\)/i);
+  const textColor = activeRule.match(/\bcolor:\s*#([a-f\d]{6})/i);
+  assert.ok(gradient && textColor, 'Dark draw buttons need a shared background and text');
+  const fg = luminance(textColor[1]);
+  for (const bg of [gradient[1], gradient[2]]) {
+    const background = luminance(bg);
+    const contrast = (Math.max(fg, background) + 0.05) /
+      (Math.min(fg, background) + 0.05);
+    assert.ok(contrast >= 4.5, 'Active draw-button text contrast: ' + contrast.toFixed(2));
+  }
+
+  const disabledSelector = 'html[data-theme="dark"] .draw-button:disabled {';
+  const disabledStart = css.lastIndexOf(disabledSelector);
+  assert.ok(disabledStart > sharedStart, 'Disabled state should override the shared active appearance');
+  const disabledRule = css.slice(disabledStart, css.indexOf('}', disabledStart));
+  assert.match(disabledRule, /background:\s*#[a-f\d]{6}/i);
+  assert.match(disabledRule, /color:\s*#[a-f\d]{6}/i);
+  assert.match(disabledRule, /cursor:\s*not-allowed/);
+  assert.match(disabledRule, /opacity:\s*1/);
+});
