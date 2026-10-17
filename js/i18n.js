@@ -112,7 +112,16 @@
             position_past: 'Past',
             position_present: 'Present',
             position_future: 'Future',
-            position_main: 'Main card'
+            position_main: 'Main card',
+
+            results_one: 'card',
+            results_many: 'cards',
+            open_card: 'Open',
+            card_element: 'Element',
+            card_suit: 'Suit',
+            card_planet: 'Planet',
+            card_sign: 'Sign',
+            card_drawn: 'Card drawn'
         },
         pt: {
             doc_title: 'Pocket Oracle — Tarô Rider-Waite',
@@ -217,7 +226,16 @@
             position_past: 'Passado',
             position_present: 'Presente',
             position_future: 'Futuro',
-            position_main: 'Carta principal'
+            position_main: 'Carta principal',
+
+            results_one: 'carta',
+            results_many: 'cartas',
+            open_card: 'Abrir',
+            card_element: 'Elemento',
+            card_suit: 'Naipe',
+            card_planet: 'Planeta',
+            card_sign: 'Signo',
+            card_drawn: 'Carta sorteada'
         }
     };
 

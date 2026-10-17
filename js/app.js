@@ -205,7 +205,7 @@
             filterInfo.classList.add('hidden');
         }
 
-        resultsCount.textContent = `${visible.length} ${visible.length === 1 ? 'carta' : 'cartas'}`;
+        resultsCount.textContent = `${visible.length} ${t(visible.length === 1 ? 'results_one' : 'results_many')}`;
         cardGrid.innerHTML = '';
 
         if (!visible.length) {
@@ -219,7 +219,7 @@
             item.className = 'oracle-card text-center cursor-pointer group';
             item.tabIndex = 0;
             item.setAttribute('role', 'button');
-            item.setAttribute('aria-label', `Abrir ${card.nome}`);
+            item.setAttribute('aria-label', `${t('open_card')} ${card.nome}`);
             item.innerHTML = `
                 <div class="oracle-card-frame">
                     <img src="${escapeHtml(card.imagem)}" alt="${escapeHtml(card.nome)}" class="w-full h-auto rounded-xl" loading="lazy">
@@ -283,10 +283,10 @@
                     <h3 class="font-playfair text-2xl mb-4 text-center">${t('detail_correspondences')}</h3>
                     <ul class="space-y-2 text-sm md:text-base">
                         ${response}
-                        <li><strong>🔥 Elemento:</strong> ${escapeHtml(card.elemento)}</li>
-                        <li><strong>🃏 Naipe:</strong> ${escapeHtml(card.naipe)}</li>
-                        <li><strong>🪐 Planeta:</strong> ${escapeHtml(card.planeta)}</li>
-                        <li><strong>✨ Signo:</strong> ${escapeHtml(card.signo)}</li>
+                        <li><strong>🔥 ${t('card_element')}:</strong> ${escapeHtml(card.elemento)}</li>
+                        <li><strong>🃏 ${t('card_suit')}:</strong> ${escapeHtml(card.naipe)}</li>
+                        <li><strong>🪐 ${t('card_planet')}:</strong> ${escapeHtml(card.planeta)}</li>
+                        <li><strong>✨ ${t('card_sign')}:</strong> ${escapeHtml(card.signo)}</li>
                     </ul>
                 </div>
             </div>
@@ -530,7 +530,7 @@
         } else if (reading.carta) {
             appendReadingSection(
                 aiReadingContent,
-                reading.carta.nome || currentDraw[0]?.nome || 'Carta sorteada',
+                reading.carta.nome || currentDraw[0]?.nome || t('card_drawn'),
                 reading.carta.interpretacao,
                 'ai-reading-highlight'
             );
