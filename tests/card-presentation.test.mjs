@@ -349,3 +349,49 @@ test('moon theme draw actions use the same enabled color and a distinct disabled
   assert.match(disabledRule, /cursor:\s*not-allowed/);
   assert.match(disabledRule, /opacity:\s*1/);
 });
+
+
+test('moon-theme position chips and all draw card names meet 4.5:1 contrast', () => {
+  const captionSelector =
+    'html[data-theme="dark"] .draw-position-label,\n' +
+    'html[data-theme="dark"] .draw-card-label {';
+  const captionStart = css.lastIndexOf(captionSelector);
+  assert.ok(captionStart >= 0, 'Both drawing modes should share dark caption styling');
+  const captionRule = css.slice(captionStart, css.indexOf('}', captionStart));
+
+  const numberSelector = 'html[data-theme="dark"] .draw-position-label span {';
+  const numberStart = css.lastIndexOf(numberSelector);
+  assert.ok(numberStart > captionStart, 'Three-card numbered positions need their own dark-mode contrast');
+  const numberRule = css.slice(numberStart, css.indexOf('}', numberStart));
+
+  const hexColor = (rule, property) => {
+    const match = rule.match(new RegExp('(?:^|\\n)\\s*' + property + ':\\s*#([a-f0-9]{6})\\s*;', 'i'));
+    assert.ok(match, 'Missing explicit ' + property + ' in Moon theme rule');
+    return match[1];
+  };
+  const contrast = (fg, bg) => {
+    const a = luminance(fg);
+    const b = luminance(bg);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  };
+  for (const [name, rule] of [['Card names and position labels', captionRule], ['Sequence numbers', numberRule]]) {
+    const ratio = contrast(hexColor(rule, 'color'), hexColor(rule, 'background'));
+    assert.ok(ratio >= 4.5, name + ' contrast: ' + ratio.toFixed(2));
+  }
+
+  // Ensure the shared class is actually rendered in both types of spread.
+  for (const [buttonId, count] of [['draw-button', 1], ['draw-three-button', 3]]) {
+    const view = frontend('pt');
+    view.elements.get(buttonId).listeners.click();
+    const drawn = view.elements.get('shuffle-animation-container').children;
+    assert.equal(drawn.length, count, buttonId + ' must draw the correct count');
+    for (const wrapper of drawn) {
+      assert.match(wrapper.innerHTML, /class="draw-card-label\b/);
+      if (count === 3) {
+        assert.match(wrapper.innerHTML, /class="draw-position-label"/);
+      } else {
+        assert.doesNotMatch(wrapper.innerHTML, /class="draw-position-label"/);
+      }
+    }
+  }
+});
