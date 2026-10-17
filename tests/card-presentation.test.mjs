@@ -395,3 +395,44 @@ test('moon-theme position chips and all draw card names meet 4.5:1 contrast', ()
     }
   }
 });
+
+
+test('sun theme draw actions share the same enabled color and legible disabled state', () => {
+  const html = read('index.html');
+  for (const id of ['draw-button', 'draw-three-button']) {
+    const button = html.match(new RegExp('<button id="' + id + '"[^>]+>'))?.[0];
+    assert.ok(button, id + ' must exist');
+    assert.doesNotMatch(button, /\sdisabled(?:\s|=|>)/i, id + ' must start enabled');
+  }
+
+  const selector = '.draw-button-primary,\n.draw-button-secondary {';
+  const start = css.indexOf(selector);
+  assert.ok(start >= 0, 'Both light-mode draw buttons must share one declaration');
+  const rule = css.slice(start, css.indexOf('}', start));
+  const gradient = rule.match(/background:\s*linear-gradient\(135deg,\s*#([a-f\d]{6}),\s*#([a-f\d]{6})\)/i);
+  const foreground = rule.match(/\bcolor:\s*#([a-f\d]{6})/i);
+  assert.ok(gradient && foreground, 'Light draw buttons require shared colors');
+  assert.match(rule, /border:\s*0/);
+
+  const contrast = (x, y) => {
+    const a = luminance(x);
+    const b = luminance(y);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  };
+  for (const background of gradient.slice(1)) {
+    assert.ok(contrast(foreground[1], background) >= 4.5,
+      'Enabled button contrast over #' + background);
+  }
+
+  const disabledSelector = '.draw-button:disabled {';
+  const disabledStart = css.indexOf(disabledSelector);
+  assert.ok(disabledStart > start, 'Disabled appearance must override enabled styles');
+  const disabled = css.slice(disabledStart, css.indexOf('}', disabledStart));
+  const background = disabled.match(/background:\s*#([a-f\d]{6})/i)?.[1];
+  const text = disabled.match(/\bcolor:\s*#([a-f\d]{6})/i)?.[1];
+  assert.ok(background && text, 'Disabled button colors should be explicit');
+  assert.ok(contrast(text, background) >= 4.5, 'Disabled text must remain legible');
+  assert.match(disabled, /cursor:\s*not-allowed/);
+  assert.match(disabled, /opacity:\s*1/);
+  assert.notEqual(background, gradient[1], 'Disabled state must be visually distinct');
+});
