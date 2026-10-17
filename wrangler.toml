@@ -2,15 +2,20 @@ name = "pocket-tarot-ai"
 main = "cloudflare-worker.js"
 compatibility_date = "2026-09-06"
 
-# Rota do Worker no domínio próprio (ETAPA B). O caminho CLÁSSICO, que funciona:
-# um registro DNS **proxied** (CNAME `api` → workers.dev, já criado) + uma ROTA
-# mandando o tráfego daquele hostname para o Worker.
-# ⚠️ A rota é criada **NO PAINEL** (o token atual não tem permissão de rotas):
-#   Workers & Pages → pocket-tarot-ai → Settings → Domínios e rotas → Adicionar rota
-#     Rota:   api.jrpasolini.tech/*
-#     Zona:   jrpasolini.tech
-#     Worker: pocket-tarot-ai
-# Deixada comentada aqui para o `deploy` não falhar no passo de rotas.
+# Rota do Worker no domínio próprio. A rota oficial é
+# **`api.jrpasolini.tech/*` → `pocket-tarot-ai`**, com `request_limit_fail_open: false`
+# (fail closed), e ela é **gerenciada FORA deste arquivo** (API/painel).
+# Por isso fica comentada: um `wrangler deploy` reconcilia `routes` e pode
+# sobrescrever a configuração manual.
+#   Conferir:  GET /zones/<zone_id>/workers/routes
+#   Permissão: Zona → Workers Routes → Editar (zona `jrpasolini.tech`)
+#   Rollback:  PUT /zones/<zone_id>/workers/routes/<route_id>
+#              {"pattern":"*.jrpasolini.tech/*","script":"pocket-tarot-ai","request_limit_fail_open":false}
+#              (reabre o curinga — estado anterior a 16/10; evitar)
+# Histórico: em 16/10 a zona estava com `*.jrpasolini.tech/*` e a rota foi
+# estreitada para `api.jrpasolini.tech/*` via PUT no próprio ID (e9ecc359…),
+# preservando o vínculo e o fail closed. O DNS é um CNAME proxied que nós
+# controlamos (`api` → `<worker>.workers.dev`), criado pela API.
 # routes = [
 #   { pattern = "api.jrpasolini.tech/*", zone_name = "jrpasolini.tech" }
 # ]

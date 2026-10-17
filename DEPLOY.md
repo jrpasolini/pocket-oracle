@@ -9,7 +9,11 @@
 1. Confirme que a conta e a zona Cloudflare são as do domínio `jrpasolini.tech` e que existe somente um Worker alvo: `pocket-tarot-ai`.
 2. Verifique os bindings e secrets existentes (`tarot-ai`, `ELEVENLABS_API_KEY`, `NARRATION_SIGNING_KEY`) sem divulgar valores.
 3. Exporte o estado das rotas, DNS, rate limiting, versões implantadas e variáveis. Prepare procedimento de rollback.
-4. A rota `api.jrpasolini.tech/*` foi configurada pelo painel/API e está **comentada** no `wrangler.toml`: o token original não tinha permissão de rotas. Não tente recriá-la nem apagá-la antes de conferir a configuração remota e a permissão do token.
+4. **A rota oficial é `api.jrpasolini.tech/*` → `pocket-tarot-ai`**, com `request_limit_fail_open: false` (**fail closed**). Ela é **gerenciada fora do `wrangler.toml`** (API/painel) e está **comentada** no arquivo de propósito: um `wrangler deploy` pode reconciliar `routes` e sobrescrever a configuração manual.
+   - **Conferir:** `GET https://api.cloudflare.com/client/v4/zones/{zone_id}/workers/routes` — deve existir **uma** rota: `api.jrpasolini.tech/*` → `pocket-tarot-ai`. Nenhuma rota curinga.
+   - **Permissão necessária:** escopo de **Zona → Workers Routes → Editar**, com a zona `jrpasolini.tech`.
+   - **Rollback da rota:** `PUT .../workers/routes/{route_id}` com `{"pattern":"*.jrpasolini.tech/*","script":"pocket-tarot-ai","request_limit_fail_open":false}` — isso **reabre o curinga** (estado anterior a 16/10; evitar, pois fica mais amplo que o WAF).
+   - **Histórico:** em 16/10 a zona estava com `*.jrpasolini.tech/*` (curinga). A rota foi **estreitada** para `api.jrpasolini.tech/*` via `PUT` no **próprio ID** (`e9ecc359…`), preservando o vínculo com o Worker e o fail closed. O WAF cobre apenas o hostname `api`.
 5. O DNS proxied da migração aponta, segundo o handover, para `pocket-tarot-ai.antonio-pasolini.workers.dev`. Embora a rota estivesse funcional, essa dependência deve ser reavaliada; prefira Custom Domain nativo após planejar uma migração reversível.
 6. `workers_dev = false` e `preview_urls = false` são a configuração desejada. Confirme via API que nenhuma URL alternativa continua atendendo requisições.
 
