@@ -219,3 +219,96 @@ test('resetting a draw cancels previous flip and completion timers', () => {
     'Only the current draw completion enables interpretation');
   assert.equal(view.timers.pending(), 0);
 });
+
+
+function zodiacOptions(view, language) {
+  const menu = view.elements.get('explore-menu').firstElementChild.children;
+  const label = language === 'pt' ? 'Signo' : 'Sign';
+  const start = menu.findIndex(item => item.textContent === label);
+  assert.ok(start >= 0, 'Missing zodiac menu heading: ' + label);
+  const end = menu.findIndex((item, index) =>
+    index > start && item.className === 'border-amber-900/10');
+  assert.ok(end > start, 'Missing zodiac menu divider');
+  return menu.slice(start + 1, end);
+}
+
+const zodiacNames = {
+  pt: ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
+    'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'],
+  en: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
+};
+
+function zodiacTerms(value) {
+  return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().split(/[^a-z]+/);
+}
+
+test('zodiac filter lists exactly 12 individual signs in both languages', () => {
+  const view = frontend('pt');
+  for (const lang of ['pt', 'en']) {
+    if (view.api.lang !== lang) view.api.setLang(lang);
+    const options = zodiacOptions(view, lang);
+    assert.equal(options.length, 12, '12 options in ' + lang);
+    const shown = options.map(option => option.textContent);
+    assert.deepEqual(new Set(shown), new Set(zodiacNames[lang]));
+    assert.ok(shown.every(value => !/[\/,()]/.test(value)),
+      'No compound entries or parenthetical metadata');
+    assert.ok(!shown.includes(lang === 'pt' ? 'Júpiter' : 'Jupiter'),
+      'A planet is not a zodiac sign');
+  }
+});
+
+test('all zodiac filters match individual tokens in compound metadata, never the entire string', () => {
+  for (const lang of ['pt', 'en']) {
+    const view = frontend(lang);
+    const deck = view.api.cards();
+    const options = zodiacOptions(view, lang);
+
+    for (const option of options) {
+      const sign = option.textContent;
+      option.listeners.click();
+      const found = cards(view).map(card => card.image);
+      const expected = deck.filter(card =>
+        zodiacTerms(card.signo).includes(zodiacTerms(sign)[0]))
+        .map(card => card.imagem);
+      assert.deepEqual(found, expected, lang + '/' + sign);
+      assert.ok(found.length > 0, 'At least one card should belong to ' + sign);
+    }
+
+    // Includes parenthesized entries such as "Fogo (Áries, Leão, Sagitário)"
+    // and English "Fire (Aries, Leo, Sagittarius)" without rewriting data.
+    const multizodiac = lang === 'pt'
+      ? { name: 'Pajem de Paus', signs: ['Áries', 'Leão', 'Sagitário'] }
+      : { name: 'Page of Wands', signs: ['Aries', 'Leo', 'Sagittarius'] };
+    const expectedCard = deck.find(card => card.nome === multizodiac.name);
+    assert.ok(expectedCard);
+    for (const sign of multizodiac.signs) {
+      options.find(option => option.textContent === sign).listeners.click();
+      assert.ok(cards(view).some(card => card.image === expectedCard.imagem),
+        multizodiac.name + ' should appear under ' + sign);
+    }
+
+    const double = lang === 'pt'
+      ? { name: 'Cavaleiro de Espadas', signs: ['Aquário', 'Gêmeos'] }
+      : { name: 'Knight of Swords', signs: ['Aquarius', 'Gemini'] };
+    const doubleCard = deck.find(card => card.nome === double.name);
+    for (const sign of double.signs) {
+      options.find(option => option.textContent === sign).listeners.click();
+      assert.ok(cards(view).some(card => card.image === doubleCard.imagem),
+        double.name + ' should appear under ' + sign);
+    }
+  }
+});
+
+test('the separate planet filter still works for planetary-only correspondence cards', () => {
+  const view = frontend('pt');
+  const menu = view.elements.get('explore-menu').firstElementChild.children;
+  const heading = menu.findIndex(item => item.textContent === 'Planeta');
+  assert.ok(heading >= 0);
+  const planetOption = menu.slice(heading + 1).find(item => item.textContent === 'Mercúrio');
+  assert.ok(planetOption);
+  planetOption.listeners.click();
+  const magician = view.api.cards().find(card => card.nome === 'O Mago');
+  assert.ok(cards(view).some(card => card.image === magician.imagem));
+});
