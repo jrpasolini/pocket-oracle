@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'pocket-oracle-';
-const CACHE_NAME = 'pocket-oracle-v27-sun-draw-buttons-20261017';
+const CACHE_NAME = 'pocket-oracle-v28-moon-language-selector-20261017';
 
 const CORE_ASSETS = [
   './',
