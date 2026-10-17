@@ -253,7 +253,17 @@
         });
         if (viewId !== 'home-view') closeExploreMenu();
         if (viewId === 'random-draw-view' && !preserveDraw) resetDraw();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Focus must follow a client-side view change; otherwise keyboard and
+        // screen-reader users may remain focused inside a now-hidden section.
+        const view = document.getElementById(viewId);
+        const heading = view?.querySelector('h2');
+        if (heading) {
+            heading.tabIndex = -1;
+            heading.focus({ preventScroll: true });
+        }
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduceMotion ? 'instant' : 'smooth' });
     }
 
     function detailSection(title, body) {
@@ -348,6 +358,7 @@
     }
 
     function drawCards(count) {
+        window.PocketAccessibility?.stop();
         cancelDrawTimers();
         drawButton.disabled = true;
         drawThreeButton.disabled = true;
@@ -634,6 +645,7 @@
 
     async function requestAiReading() {
         if (aiRequestInFlight || !currentDrawRevealed || currentDraw.length === 0) return;
+        window.PocketAccessibility?.stop();
 
         if (!questionInput.value.trim()) {
             questionInput.focus();
