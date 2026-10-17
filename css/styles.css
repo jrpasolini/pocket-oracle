@@ -1562,6 +1562,12 @@ button,
     line-height: 1;
     cursor: pointer;
 }
+/* The Sun control uses text-presentation glyph (not a platform emoji)
+   so its golden color is consistent across desktop and mobile. */
+html[data-theme="dark"] #theme-toggle [aria-hidden="true"] {
+    color: #ffd34d;
+    text-shadow: 0 0 10px rgba(255, 211, 77, .35);
+}
 .accessibility-toggle:hover { box-shadow: 0 5px 16px rgba(0,0,0,.17); }
 .accessibility-toggle:disabled { cursor: not-allowed; opacity: .55; }
 .accessibility-toggle:focus-visible,
