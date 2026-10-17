@@ -1,4 +1,4 @@
-const SERVICE = 'tarot-rider-waite-ai';
+const SERVICE = 'pocket-tarot-ai';
 // 1.9.0 — classificação de falhas (timeout de fatia × erro de provedor × resposta
 // inválida, com os códigos 3036/3040/5035 da Workers AI) e /health honesto: a
 // narração só aparece como pronta com as DUAS chaves presentes.

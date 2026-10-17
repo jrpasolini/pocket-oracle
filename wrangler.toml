@@ -1,6 +1,25 @@
-name = "tarot-rider-waite-ai"
+name = "pocket-tarot-ai"
 main = "cloudflare-worker.js"
 compatibility_date = "2026-09-06"
+
+# Rota do Worker no domínio próprio (ETAPA B). O caminho CLÁSSICO, que funciona:
+# um registro DNS **proxied** (CNAME `api` → workers.dev, já criado) + uma ROTA
+# mandando o tráfego daquele hostname para o Worker.
+# ⚠️ A rota é criada **NO PAINEL** (o token atual não tem permissão de rotas):
+#   Workers & Pages → pocket-tarot-ai → Settings → Domínios e rotas → Adicionar rota
+#     Rota:   api.jrpasolini.tech/*
+#     Zona:   jrpasolini.tech
+#     Worker: pocket-tarot-ai
+# Deixada comentada aqui para o `deploy` não falhar no passo de rotas.
+# routes = [
+#   { pattern = "api.jrpasolini.tech/*", zone_name = "jrpasolini.tech" }
+# ]
+
+# ⚠️ Obrigatório enquanto a aposentadoria não acontecer: ao definir `routes`, o
+# wrangler DESLIGA o `workers.dev` por padrão. Sem esta linha, o app (que ainda
+# aponta para o endereço antigo) fica sem API. A aposentadoria do workers.dev
+# será um passo explícito, depois que o front-end estiver no domínio novo.
+workers_dev = true
 
 # Binding da Workers AI. O Worker aceita tanto `env["tarot-ai"]` (nome usado
 # no painel) quanto o fallback `env.AI`.
