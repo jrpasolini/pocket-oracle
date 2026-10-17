@@ -1,29 +1,38 @@
-# Worker de interpretação do Tarot
+# Worker de interpretação — Pocket Oracle
 
-O arquivo `cloudflare-worker.js` é o código do Worker `tarot-rider-waite-ai`.
+**Repositório:** `jrpasolini/pocket-oracle` · **Worker:** `pocket-tarot-ai` · **API:** `https://api.jrpasolini.tech`.
 
-## Configuração no painel da Cloudflare
+O `cloudflare-worker.js` mantém a lógica de interpretação, narração e tratamento de erros. A versão **1.9.1** presente no GitHub só aparecerá em `/health` após um deploy correspondente na Cloudflare. Nunca confunda *commit* com *deploy*.
 
-1. Abra **Workers & Pages → tarot-rider-waite-ai → Editar código**.
-2. Substitua o conteúdo do editor por `cloudflare-worker.js`.
-3. Confirme em **Bindings** que o Workers AI está vinculado com o nome exato `tarot-ai`.
-4. Clique em **Deploy**.
-5. Abra `https://tarot-rider-waite-ai.antonio-pasolini.workers.dev/health` e confirme que a resposta contém `"ok": true`.
+## Ambiente e rotas
 
-O frontend já aponta para:
+- Bindings: Workers AI com nome `tarot-ai` (ou fallback `AI`), secrets `ELEVENLABS_API_KEY` e `NARRATION_SIGNING_KEY`, variável `ELEVENLABS_VOICE_ID` e allowlist `ALLOWED_ORIGINS`.
+- Endpoints: `GET /health`, `POST /interpretar` e `POST /narrar`.
+- `workers_dev = false` e `preview_urls = false` estão configurados no `wrangler.toml`; **confirme também os estados remotos** de workers.dev, Version/Preview URLs e eventuais aliases pelo painel/API.
+- A migração de 16/10 usou uma rota de zona `api.jrpasolini.tech/*` criada no painel e um DNS proxied. O arquivo `wrangler.toml` NÃO declara essa rota ativa. Inventarie rotas e DNS remotos antes de qualquer redeploy. Não remova a rota para tentar recriá-la com um token sem permissões.
+- Uma regra WAF de rate limiting foi informada no handover da Melissa (30 requisições / 10 segundos por IP e colo; `http.host eq "api.jrpasolini.tech"`). Essa configuração vive na Cloudflare e deve ser conferida pela API, pois não é gerenciada pelo código do Worker.
+- O CORS autoriza apenas origens permitidas; **CORS não é autenticação**.
 
-`https://tarot-rider-waite-ai.antonio-pasolini.workers.dev/interpretar`
+## Validação e atualização
 
-## Contrato
+1. Confira o commit da `main`, o código e os bindings atuais no painel. **Não substitua secrets existentes**.
+2. Execute `npm test` (ou `node --test tests/*.test.mjs`) sem usar créditos dos provedores.
+3. Antes de implantar, compare `wrangler.toml` com configurações, domínio, rota, variáveis e secrets efetivos. Se o deploy tentar remover ou substituir uma rota, interrompa e peça aprovação.
+4. Com autorização e credenciais apropriadas, use `wrangler deploy --config wrangler.toml` ou o mecanismo de implantação já empregado. Isso altera produção; o push no GitHub não publica automaticamente o Worker.
+5. Verifique `https://api.jrpasolini.tech/health`: nome `pocket-tarot-ai`, versão esperada e `narration` conforme as duas chaves. Uma resposta 200 não comprova inferência nem narração.
+6. Confira `OPTIONS` e allowlist de origens, um erro de payload inválido e, somente com autorização, uma interpretação e uma narração reais de baixo volume. Verifique Render e GitHub Pages, além da PWA instalada.
+7. Depois do deploy, confirme que `workers.dev`, Version URLs, Preview URLs e rotas antigas não expõem a API fora do WAF. Prepare rollback antes de mudanças de DNS/WAF.
 
-- `GET /health`: confirma que o Worker está publicado.
-- `POST /interpretar`: recebe uma pergunta e uma tiragem de uma ou três cartas.
-- Modelo prioritário: `@cf/google/gemma-4-26b-a4b-it` (fallback: Llama 3.3).
-- Origens liberadas: GitHub Pages de `jrpasolini` e servidor local nas portas documentadas.
-- A resposta usa JSON estruturado e é renderizada no site somente como texto.
+## Política de fallback e limites
 
-O Tarot continua funcionando como galeria, PWA e oráculo offline. Apenas a interpretação com IA exige conexão.
+- **Gemma 4** é prioritária; **Llama 3.3** é fallback.
+- `3036` (cota diária da conta esgotada): parar a cascata, sem chamar Llama, e responder HTTP 429.
+- `3040` (capacidade temporariamente indisponível): fallback pode ser tentado dentro do orçamento.
+- `5035` (modelo exige plano pago): fallback para outro modelo disponível pode ser tentado; nunca fazer upgrade automático.
+- Resposta inválida ou timeout de fatia: pode justificar fallback, preservando as restrições de validação e os tempos atuais (Gemma 60 s, total 100 s, navegador 105 s). `Promise.race` não garante cancelamento do processamento remoto.
+- O rate limiter em memória do Worker é secundário, por isolate; não substitui uma regra de borda e não estabelece cota global exata.
 
+Veja também [`DEPLOY.md`](DEPLOY.md) para a sequência de implantação.
 
 ## Proteção da narração ElevenLabs (obrigatória antes de publicar)
 

@@ -1,0 +1,9 @@
+{
+  "name": "pocket-oracle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bilingual Rider-Waite Tarot static PWA with Cloudflare Workers AI",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

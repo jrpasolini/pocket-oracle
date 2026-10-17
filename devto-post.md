@@ -61,7 +61,7 @@ Five of six answered by the open-weight model, median ≈ 33.5 s. The sixth is t
 
 That number — 60 seconds for the primary, a 100-second total budget, a 105-second client ceiling — is the whole design. It is not a guess; it's what the measurements asked for. The app now delivers what it advertises, and when it can't, it says so by handing over to the backup rather than pretending.
 
-Two more things worth mentioning: an **independent audit** by a different model family (GPT-5.6 Sol) found eight issues, all fixed and covered by tests — an audit reduces risk, it doesn't prove correctness, so both were needed. And the **narration** is signed server-side, so the voice API key never reaches the client.
+Two more things worth mentioning: independent reviews and regression tests helped uncover and fix real issues, including the handling of AI quotas and stale PWA endpoints. Reviews reduce risk; they do not prove the system is flawless, and infrastructure checks remain ongoing. The **narration** is signed server-side, so the voice API key never reaches the client.
 
 ## Why Does Open Innovation Matter?
 

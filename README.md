@@ -19,7 +19,7 @@ Rider-Waite card images are public domain, obtained from a collection based on t
 ## Stack
 
 - **Static PWA** — no build step, no framework, no bundler
-- **Cloudflare Worker** (`cloudflare-worker.js`) as the AI backend
+- **Cloudflare Worker** (`pocket-tarot-ai`, `cloudflare-worker.js`) at `https://api.jrpasolini.tech` as the AI backend
 - **Cloudflare Workers AI** for the readings — an **open-weight** model
 - Deployed on **GitHub Pages**
 
@@ -38,7 +38,7 @@ The deck itself, the search, the filters and the draws all work **offline** — 
 - **Interpretation:** the browser sends the question and card names to the Cloudflare Worker. The Worker uses trusted card descriptions embedded in its source to call **Gemma 4** via Cloudflare Workers AI (with Llama fallback). The application does not intentionally persist questions, but providers' operational logs and retention policies still apply.
 - **Narration (optional):** only when the reader asks to *listen*, the browser sends a short-lived signed authorization issued with that interpretation. The Worker verifies it, then forwards the authorized reading text to **ElevenLabs**. The ElevenLabs API key and signing key live as Worker secrets and never reach the browser. Voice stays disabled until both are configured.
 - So two external providers can receive text: **Cloudflare Workers AI** (the reading) and **ElevenLabs** (the narration, only after an explicit click). A reading may echo parts of the reader's question.
-- **Rate limiting:** the Worker applies a light per-IP limit to its paid endpoints, which is **not a global quota**. Before public deployment, configure Cloudflare **Rate Limiting** for `/interpretar` and `/narrar`, plus provider-side spending alerts/budgets.
+- **Rate limiting:** a Cloudflare zone WAF rule was reported in the 2026-10-16 infrastructure handover (30 requests / 10 seconds per IP and data center on `api.jrpasolini.tech`); verify the live rule through Cloudflare before relying on it. The Worker's per-isolate in-memory limits remain secondary, not a distributed/global quota. Check alternate routes and preview URLs before declaring the API protected.
 
 ## Structure
 
@@ -47,7 +47,7 @@ The deck itself, the search, the filters and the draws all work **offline** — 
 - `js/cards.js` — the 78-card dataset
 - `js/app.js` — navigation, search, filters, card details and draws
 - `cloudflare-worker.js` — the AI interpretation Worker
-- `README-CLOUDFLARE-WORKER.md` — how to deploy the Worker
+- `README-CLOUDFLARE-WORKER.md` and `DEPLOY.md` — current Worker deployment and security checklist
 - `sw.js` — service worker (offline support)
 - `icons/` — app icons at 180, 192 and 512 px
 

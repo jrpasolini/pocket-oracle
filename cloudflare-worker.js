@@ -2,7 +2,7 @@ const SERVICE = 'pocket-tarot-ai';
 // 1.9.0 — classificação de falhas (timeout de fatia × erro de provedor × resposta
 // inválida, com os códigos 3036/3040/5035 da Workers AI) e /health honesto: a
 // narração só aparece como pronta com as DUAS chaves presentes.
-const VERSION = '1.9.0';
+const VERSION = '1.9.1';
 const MAX_BODY_LENGTH = 50_000;
 
 // Orçamento total do caminho de interpretação. O cliente desiste aos 105 s;
@@ -715,6 +715,14 @@ async function interpret(request, env, origin, debug = false, requestId = newReq
       const failure = describeFailure(error, model, slice);
       failures.push(failure);
       console.error(failureLine(requestId, failure));
+
+      // 3036 esgota a cota diária da CONTA, não apenas a disponibilidade do
+      // modelo. Tentar o Llama na mesma conta não resolve e só multiplica
+      // chamadas inúteis. Diferentemente do 3040 (capacidade transitória)
+      // e do 5035 (restrição do modelo específico), aqui encerramos a cascata.
+      if (failure.reason === 'account_limited') {
+        throw new RequestError('A cota diária de leituras com IA foi atingida. Tente novamente após a renovação da cota.', 429);
+      }
     }
   }
 

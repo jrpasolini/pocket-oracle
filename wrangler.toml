@@ -16,11 +16,15 @@ compatibility_date = "2026-09-06"
 # ]
 
 # ✅ Aposentado em 2026-10-16: o app já usa `api.jrpasolini.tech` (rota) e o
-# `workers.dev` sai do ar. O Worker responde APENAS no domínio próprio.
+# `workers.dev` sai do ar. Verifique também URLs de preview/versionamento.
 # (Lembrete da casa: ao definir `routes`, o wrangler desliga o workers.dev por
 # padrão — foi um `workers_dev = true` explícito que segurou o app de pé durante
 # a migração. Agora que a migração terminou, `false` é o estado final.)
 workers_dev = false
+
+# Version/Preview URLs são entradas públicas alternativas e podem contornar o
+# WAF da zona. O estado efetivo da Cloudflare deve ser conferido após o deploy.
+preview_urls = false
 
 # Binding da Workers AI. O Worker aceita tanto `env["tarot-ai"]` (nome usado
 # no painel) quanto o fallback `env.AI`.

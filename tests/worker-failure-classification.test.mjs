@@ -183,9 +183,9 @@ test('invalid model output is classified as an invalid response, never as a prov
   assert.equal(api.describeFailure(wrongShape, { id: GEMMA }, 60_000).kind, 'invalid_response');
 });
 
-test('a provider failure on the first model hands over to the next one', async () => {
+test('a transient 3040 capacity failure on the first model hands over to the next one', async () => {
   const env = mockEnv({
-    [GEMMA]: providerError(3036),
+    [GEMMA]: providerError(3040),
     [LLAMA]: { response: JSON.stringify(reading()) }
   });
   const logs = captureLogs();
@@ -201,11 +201,66 @@ test('a provider failure on the first model hands over to the next one', async (
     const logged = logs.lines.join('\n');
     assert.match(logged, /\[interpretar rid00001\]/);
     assert.match(logged, /kind=provider/);
-    assert.match(logged, /reason=account_limited/);
-    assert.match(logged, /code=3036/);
+    assert.match(logged, /reason=out_of_capacity/);
+    assert.match(logged, /code=3040/);
     assert.equal(logged.includes(QUESTION), false);
     assert.equal(logged.includes('Um começo'), false);
     assert.equal(logged.includes('AiError'), false);
+  } finally {
+    logs.restore();
+  }
+});
+
+test('3036 daily account quota stops the cascade without calling the backup model', async () => {
+  const calls = [];
+  const env = {
+    'tarot-ai': {
+      run: async modelId => {
+        calls.push(modelId);
+        throw providerError(3036, QUESTION);
+      }
+    }
+  };
+  const logs = captureLogs();
+  try {
+    const response = await api.worker.fetch(interpretRequest(), env);
+    assert.equal(response.status, 429);
+    const body = await response.json();
+    assert.equal(body.ok, false);
+    assert.match(body.details, /cota diária/i);
+    assert.deepEqual(calls, [GEMMA], 'Llama must not run after the account quota is exhausted');
+    assert.equal(typeof body.requestId, 'string');
+    assert.equal(body.requestId.length, 8);
+    assert.equal(JSON.stringify(body).includes(QUESTION), false);
+    const logged = logs.lines.join('\n');
+    assert.match(logged, /reason=account_limited/);
+    assert.match(logged, /code=3036/);
+    assert.equal(logged.includes(QUESTION), false);
+  } finally {
+    logs.restore();
+  }
+});
+
+test('a 5035 paid-plan restriction on Gemma can fall back to the independent free model', async () => {
+  const calls = [];
+  const env = {
+    'tarot-ai': {
+      run: async modelId => {
+        calls.push(modelId);
+        if (modelId === GEMMA) throw providerError(5035);
+        return { response: JSON.stringify(reading()) };
+      }
+    }
+  };
+  const logs = captureLogs();
+  try {
+    const response = await api.interpret(interpretRequest(), env, ORIGIN, false, 'rid5035');
+    assert.equal(response.status, 200);
+    assert.deepEqual(calls, [GEMMA, LLAMA]);
+    const body = await response.json();
+    assert.equal(body.model, LLAMA);
+    assert.equal(body.fallbacksUsed, 1);
+    assert.match(logs.lines.join('\n'), /reason=paid_plan_required/);
   } finally {
     logs.restore();
   }
