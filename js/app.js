@@ -244,6 +244,7 @@
     }
 
     function showView(viewId, preserveDraw = false) {
+        window.PocketAccessibility?.stop();
         ['home-view', 'card-detail-view', 'random-draw-view'].forEach(id => {
             document.getElementById(id).classList.toggle('hidden', id !== viewId);
         });
@@ -544,6 +545,18 @@
         disclaimer.textContent = t('disclaimer');
         aiReadingContent.appendChild(disclaimer);
 
+        // Attribution is controlled by the backend response, never by the
+        // generated interpretation. Only recognize the actual known model IDs.
+        const modelLabels = {
+            '@cf/google/gemma-4-26b-a4b-it': 'Gemma 4 26B A4B (Google)',
+            '@cf/meta/llama-3.3-70b-instruct-fp8-fast': 'Llama 3.3 70B (Meta)'
+        };
+        const modelCredit = document.createElement('p');
+        modelCredit.className = 'ai-reading-model-credit';
+        modelCredit.textContent = t('reading_model_credit') + ' ' +
+            (modelLabels[data.model] || t('reading_model_unknown')) + '.';
+        aiReadingContent.appendChild(modelCredit);
+
         const narrationRow = document.createElement('div');
         narrationRow.className = 'ai-reading-narration';
 
@@ -555,6 +568,10 @@
 
         if (data.narrationToken) {
             narrationRow.appendChild(narrationButton);
+            const narrationCredit = document.createElement('p');
+            narrationCredit.className = 'ai-reading-provider-credit';
+            narrationCredit.textContent = t('narration_provider_credit');
+            narrationRow.appendChild(narrationCredit);
             aiReadingContent.appendChild(narrationRow);
         }
 
@@ -564,6 +581,7 @@
 
     async function narrateReading(button, row) {
         if (narrationInFlight || !lastReading?.narrationToken) return;
+        window.PocketAccessibility?.stop();
 
         narrationInFlight = true;
         const requestId = ++narrationRequestId;
