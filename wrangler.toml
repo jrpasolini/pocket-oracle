@@ -15,11 +15,12 @@ compatibility_date = "2026-09-06"
 #   { pattern = "api.jrpasolini.tech/*", zone_name = "jrpasolini.tech" }
 # ]
 
-# ⚠️ Obrigatório enquanto a aposentadoria não acontecer: ao definir `routes`, o
-# wrangler DESLIGA o `workers.dev` por padrão. Sem esta linha, o app (que ainda
-# aponta para o endereço antigo) fica sem API. A aposentadoria do workers.dev
-# será um passo explícito, depois que o front-end estiver no domínio novo.
-workers_dev = true
+# ✅ Aposentado em 2026-10-16: o app já usa `api.jrpasolini.tech` (rota) e o
+# `workers.dev` sai do ar. O Worker responde APENAS no domínio próprio.
+# (Lembrete da casa: ao definir `routes`, o wrangler desliga o workers.dev por
+# padrão — foi um `workers_dev = true` explícito que segurou o app de pé durante
+# a migração. Agora que a migração terminou, `false` é o estado final.)
+workers_dev = false
 
 # Binding da Workers AI. O Worker aceita tanto `env["tarot-ai"]` (nome usado
 # no painel) quanto o fallback `env.AI`.
