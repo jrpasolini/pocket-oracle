@@ -1522,3 +1522,183 @@ button,
 .element-inline-dot.element-terra {
     background: #52633c;
 }
+
+
+
+/* ===== Pocket Oracle accessibility — Sun / Moon and local read-aloud ===== */
+/* The default light theme keeps the existing parchment identity intact. */
+.skip-link {
+    position: fixed;
+    top: .75rem;
+    left: .75rem;
+    z-index: 100;
+    padding: .7rem 1rem;
+    border-radius: .7rem;
+    background: #fff9e9;
+    color: #3b2522;
+    border: 3px solid #8c4d22;
+    transform: translateY(-150%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+.accessibility-controls {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+}
+.accessibility-toggle {
+    display: inline-grid;
+    place-items: center;
+    min-width: 48px;
+    min-height: 48px;
+    padding: .5rem;
+    border-radius: .95rem;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-strong);
+    color: var(--ink);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+}
+.accessibility-toggle:hover { box-shadow: 0 5px 16px rgba(0,0,0,.17); }
+.accessibility-toggle:disabled { cursor: not-allowed; opacity: .55; }
+.accessibility-toggle:focus-visible,
+#read-card-button:focus-visible,
+.skip-link:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+}
+.ai-reading-model-credit {
+    margin-top: 1.25rem;
+    padding-top: .9rem;
+    border-top: 1px solid var(--panel-border);
+    color: var(--ink-soft);
+    font-size: .82rem;
+    font-style: italic;
+    line-height: 1.6;
+}
+.ai-reading-provider-credit {
+    color: var(--ink-soft);
+    font-size: .78rem;
+    line-height: 1.55;
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --parchment: #161923;
+    --parchment-dark: #202633;
+    --ink: #f4edde;
+    --ink-soft: #e0d1ba;
+    --wine: #f0c78c;
+    --wine-deep: #f2d3a5;
+    --gold: #e8bf76;
+    --gold-soft: #efd49c;
+    --panel: rgba(32, 38, 52, .94);
+    --panel-strong: #252d3b;
+    --panel-border: rgba(234, 204, 146, .35);
+    --shadow-soft: 0 20px 48px rgba(0,0,0,.31);
+    --shadow-card: 0 15px 32px rgba(0,0,0,.32);
+    --focus-ring: #f2ca75;
+}
+html[data-theme="dark"] body {
+    color: var(--ink);
+    background:
+        radial-gradient(circle at 7% 10%, rgba(143, 95, 46, .18), transparent 30rem),
+        radial-gradient(circle at 85% 85%, rgba(73, 81, 141, .19), transparent 30rem),
+        linear-gradient(180deg, #131722 0%, #1d2530 100%);
+}
+html[data-theme="dark"] body::before {
+    background: linear-gradient(180deg, rgba(255,255,255,.015), transparent 25%, rgba(0,0,0,.08));
+    box-shadow: inset 0 0 100px rgba(0,0,0,.14);
+}
+html[data-theme="dark"] .hero-header h1,
+html[data-theme="dark"] #home-view h2,
+html[data-theme="dark"] #random-draw-view h2,
+html[data-theme="dark"] .site-footer > p:first-child {
+    color: var(--ink) !important;
+}
+html[data-theme="dark"] .hero-subtitle,
+html[data-theme="dark"] .section-description,
+html[data-theme="dark"] .draw-hint,
+html[data-theme="dark"] .ai-reading-hint {
+    color: var(--ink-soft);
+}
+html[data-theme="dark"] .meta-chip,
+html[data-theme="dark"] .oracle-nav {
+    color: var(--ink);
+    background: rgba(35, 42, 55, .96);
+    border-color: var(--panel-border);
+    box-shadow: 0 12px 30px rgba(0,0,0,.22);
+}
+html[data-theme="dark"] .toolbar-button-secondary,
+html[data-theme="dark"] .toolbar-button-tertiary,
+html[data-theme="dark"] .toolbar-button-secondary:hover,
+html[data-theme="dark"] .toolbar-button-tertiary:hover,
+html[data-theme="dark"] .toolbar-search,
+html[data-theme="dark"] #explore-menu {
+    color: var(--ink);
+    background: #2d3545;
+    border-color: var(--panel-border);
+}
+html[data-theme="dark"] .toolbar-search::placeholder { color: #d4c6b3; opacity: 1; }
+html[data-theme="dark"] .toolbar-button-primary {
+    background: #a14e32;
+    color: #fffaf2;
+}
+html[data-theme="dark"] .home-panel,
+html[data-theme="dark"] .draw-panel {
+    background: linear-gradient(145deg, rgba(39,46,60,.99), rgba(28,34,45,.99));
+}
+html[data-theme="dark"] .oracle-panel::before {
+    border-color: rgba(234,204,146,.20);
+}
+html[data-theme="dark"] .filter-banner,
+html[data-theme="dark"] .oracle-question-panel,
+html[data-theme="dark"] .ai-reading-result {
+    background: #282f3d;
+    color: var(--ink);
+    border-color: var(--panel-border);
+}
+html[data-theme="dark"] .oracle-question-input,
+html[data-theme="dark"] .oracle-question-input:focus {
+    background: #1b2230;
+    color: var(--ink);
+    border-color: #9c835d;
+}
+html[data-theme="dark"] .oracle-question-meta,
+html[data-theme="dark"] .ai-reading-question,
+html[data-theme="dark"] .ai-reading-opening,
+html[data-theme="dark"] .ai-reading-disclaimer {
+    color: var(--ink-soft);
+}
+html[data-theme="dark"] .ai-reading-card,
+html[data-theme="dark"] .ai-reading-section {
+    background: #333b4d;
+    border-color: var(--panel-border);
+}
+html[data-theme="dark"] .ai-reading-highlight { background: #3c3844; }
+html[data-theme="dark"] .ai-reading-answer { background: #393242; }
+html[data-theme="dark"] .ai-reading-text,
+html[data-theme="dark"] .ai-reading-section-title,
+html[data-theme="dark"] .ai-reading-loading strong,
+html[data-theme="dark"] .ai-reading-position {
+    color: var(--ink);
+}
+html[data-theme="dark"] .oracle-card-frame {
+    background: linear-gradient(145deg, #414a59, #252b39);
+    border-color: var(--panel-border);
+}
+html[data-theme="dark"] .card-title-home { color: var(--ink); }
+html[data-theme="dark"] .site-footer { color: var(--ink-soft); }
+html[data-theme="dark"] .footer-credits { color: var(--ink-soft); }
+html[data-theme="dark"] .footer-credits a { color: #f5d19b; }
+html[data-theme="dark"] .footer-credits a:hover { color: #fff3dd; }
+
+/* Preserve the elemental card backgrounds, including their own light/dark
+   text rules, so theme switching does not destroy card artwork or contrast. */
+@media (max-width: 760px) {
+    .accessibility-controls { width: auto; }
+    .ai-reading-model-credit { font-size: .8rem; }
+}
