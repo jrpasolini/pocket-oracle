@@ -1,5 +1,6 @@
-/* Pocket Oracle — optional local browser speech and visual theme.
- * No microphone, external TTS or telemetry.
+/* Pocket Oracle — browser-native read-aloud and visual theme.
+ * No microphone or application-owned paid speech API. Browser voices can
+ * depend on platform network services; availability varies by device.
  */
 (function () {
     'use strict';
