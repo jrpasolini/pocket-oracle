@@ -260,7 +260,7 @@
         const heading = view?.querySelector('h2');
         if (heading) {
             heading.tabIndex = -1;
-            heading.focus({ preventScroll: true });
+            heading.focus?.({ preventScroll: true });
         }
         const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
         window.scrollTo({ top: 0, behavior: reduceMotion ? 'instant' : 'smooth' });
