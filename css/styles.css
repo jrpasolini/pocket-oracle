@@ -432,15 +432,24 @@ body::before {
 
 .draw-button:hover { transform: translateY(-2px) scale(1.01); }
 
-.draw-button-primary {
-    background: linear-gradient(135deg, #8e2e2e, #b0672d);
+/* Both choices are equally enabled actions in the Sun theme as well.
+   Match the Moon palette, including its 4.5:1+ contrast at both ends. */
+.draw-button-primary,
+.draw-button-secondary {
+    background: linear-gradient(135deg, #8e2e2e, #a65c2c);
     color: #fff8f0;
+    border: 0;
 }
 
-.draw-button-secondary {
-    background: rgba(255, 252, 246, .9);
-    color: var(--ink);
-    border: 1px solid rgba(120, 84, 50, .16);
+/* A visibly muted appearance is reserved for an actually disabled button
+   (temporarily during shuffle), never for the three-card action itself. */
+.draw-button:disabled {
+    background: #d9d3c9;
+    color: #46372b;
+    opacity: 1;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
 
 .draw-hint {
