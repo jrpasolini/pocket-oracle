@@ -27,8 +27,12 @@
     const aiReadingLoading = document.getElementById('ai-reading-loading');
     const aiReadingContent = document.getElementById('ai-reading-content');
 
-    const AI_ENDPOINT = 'https://tarot-rider-waite-ai.antonio-pasolini.workers.dev/interpretar';
-    const NARRATE_ENDPOINT = 'https://tarot-rider-waite-ai.antonio-pasolini.workers.dev/narrar';
+    // O endereço da API. Fica em UM lugar só: trocar de casa é mudar esta linha.
+    // Domínio próprio (`api.jrpasolini.tech`) → é por ele que o tráfego passa
+    // pela zona do projeto, o que faz a regra de rate limit valer.
+    const API_BASE = 'https://api.jrpasolini.tech';
+    const AI_ENDPOINT = API_BASE + '/interpretar';
+    const NARRATE_ENDPOINT = API_BASE + '/narrar';
     let lastReading = null;
     let narrationInFlight = false;
     let narrationRequestController = null;
