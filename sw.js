@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'pocket-oracle-';
-const CACHE_NAME = 'pocket-oracle-v22-sun-icon-20261017';
+const CACHE_NAME = 'pocket-oracle-v23-tarot-terminology-20261017';
 
 const CORE_ASSETS = [
   './',
