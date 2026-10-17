@@ -33,7 +33,7 @@
         switchTheme.setAttribute('aria-label', tr(dark ? 'theme_to_light' : 'theme_to_dark'));
         switchTheme.setAttribute('title', tr(dark ? 'theme_to_light' : 'theme_to_dark'));
         const icon = switchTheme.querySelector('[aria-hidden]');
-        if (icon) icon.textContent = dark ? '☀' : '☾';
+        if (icon) icon.textContent = dark ? '☀︎' : '☾';
     }
 
     function setTheme(theme) {
