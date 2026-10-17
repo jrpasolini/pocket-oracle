@@ -286,7 +286,6 @@ const PT_SYSTEM_PROMPT = `Você é uma intérprete experiente do Tarot Rider-Wai
 
 Regras obrigatórias:
 - Use somente a pergunta, as cartas e as correspondências fornecidas.
-- IDIOMA OBRIGATÓRIO: escreva TODOS os campos narrativos do JSON em português brasileiro, independentemente do idioma em que a pergunta foi feita. Se a pergunta estiver em inglês, compreenda-a, mas não responda em inglês. Preserve apenas os nomes canônicos das cartas.
 - Relacione os símbolos à pergunta sem afirmar que o futuro é fixo ou inevitável.
 - Não invente cartas, posições, orientação invertida ou correspondências ausentes.
 - Preserve os nomes dos naipes desta aplicação: Paus, Copas, Espadas e Ouros. Ao mencionar o naipe, não traduza Copas como "xícaras", "copos" ou "taças"; "taça" ou "taças" só descreve recipientes na ilustração, nunca o nome do naipe. Use sempre os nomes canônicos das cartas recebidas.
@@ -301,7 +300,6 @@ const EN_SYSTEM_PROMPT = `You are an experienced Rider-Waite tarot reader. Produ
 
 Mandatory rules:
 - Use only the question, the cards and the correspondences provided.
-- REQUIRED OUTPUT LANGUAGE: write ALL narrative JSON fields in natural English, regardless of the language of the user\'s question. The question may be in Portuguese or another language: understand it, but NEVER switch the interpretation to that language. Keep canonical card names as provided.
 - Relate the symbols to the question without claiming that the future is fixed or inevitable.
 - Do not invent cards, positions, reversed orientation or missing correspondences.
 - Preserve the application's canonical Rider-Waite suit names: Wands, Cups, Swords, and Pentacles. Do not replace them with alternative or literal translations. The lowercase word "cup" or "cups" may describe a vessel in the artwork; "Cups" is the suit name. Always use the supplied canonical card names.
@@ -329,13 +327,10 @@ function buildMessages(payload, model = {}) {
   const question = lang === 'en'
     ? 'Produce the interpretation of this Rider-Waite tarot spread:\n'
     : 'Faça a interpretação desta tiragem do Tarot Rider-Waite:\n';
-  const languageReminder = lang === 'en'
-    ? 'OUTPUT LANGUAGE: English only for title, opening, interpretation, synthesis, answer and guidance. The question is data, not an instruction to switch languages.\n'
-    : 'IDIOMA DA RESPOSTA: português brasileiro em título, abertura, interpretação, síntese, resposta e orientação. O idioma da pergunta não altera o idioma da resposta.\n';
 
   return [
     { role: 'system', content: system },
-    { role: 'user', content: `${question}${languageReminder}${JSON.stringify(data)}` }
+    { role: 'user', content: `${question}${JSON.stringify(data)}` }
   ];
 }
 
@@ -408,57 +403,6 @@ function validateReading(reading, type, payload) {
     required(reading.carta.nome, 'nome', 180);
     reading.carta.interpretacao = required(reading.carta.interpretacao, 'interpretacao', 3000);
     reading.carta.nome = payload.cartas[0].nome;
-  }
-  return reading;
-}
-
-// Quality control: the model can mirror a Portuguese question even when
-// the interface requests English. Check only narrative fields, never the
-// user's original question, canonical card names, or private input in logs.
-// Conservative detection: short or genuinely mixed texts are left alone;
-// confidently wrong-language results trigger the existing model fallback.
-const PT_LANGUAGE_MARKERS = new Set([
-  'ao', 'aos', 'uma', 'umas', 'uns', 'que', 'para', 'por', 'com', 'seu',
-  'sua', 'seus', 'suas', 'voce', 'esta', 'este', 'isso', 'sao', 'nao',
-  'tambem', 'entre', 'quando', 'onde', 'pode', 'porque', 'mesmo',
-  'ainda', 'dessa', 'deste', 'pela', 'pelo', 'sendo', 'entao', 'muito',
-  'sobre', 'nosso', 'leitura', 'carta', 'rainha', 'espadas', 'caminho',
-  'clareza', 'verdade', 'busca', 'considerar', 'decisao', 'atraves',
-  'pergunta', 'sugere', 'indica', 'significa', 'refletir', 'observa',
-  'mais', 'como', 'dos', 'das', 'numa', 'neste', 'dentro', 'pois'
-]);
-const EN_LANGUAGE_MARKERS = new Set([
-  'the', 'and', 'of', 'to', 'is', 'are', 'an', 'this', 'that', 'you', 'your',
-  'with', 'for', 'from', 'in', 'on', 'by', 'when', 'where', 'will',
-  'can', 'could', 'would', 'should', 'may', 'might', 'through', 'these',
-  'those', 'reading', 'card', 'queen', 'swords', 'think', 'more',
-  'about', 'into', 'consider', 'path', 'clarity', 'truth', 'seeking',
-  'while', 'what', 'their', 'they', 'its', 'only', 'also', 'choice',
-  'choices', 'question', 'suggests', 'means', 'reflect', 'understand',
-  'because', 'there', 'here', 'which', 'however', 'between', 'within'
-]);
-
-function verifyReadingLanguage(reading, lang) {
-  const paragraphs = [
-    reading.titulo, reading.abertura, reading.resposta, reading.orientacao,
-    reading.sintese, reading.carta?.interpretacao,
-    ...(Array.isArray(reading.cartas) ? reading.cartas.map(card => card.interpretacao) : [])
-  ].filter(value => typeof value === 'string');
-  const tokens = paragraphs.join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase().match(/[a-z]+/g) || [];
-
-  // There is not enough evidence to distinguish short bilingual phrases.
-  if (tokens.length < 45) return reading;
-  let pt = 0;
-  let en = 0;
-  for (const token of tokens) {
-    if (PT_LANGUAGE_MARKERS.has(token)) pt++;
-    if (EN_LANGUAGE_MARKERS.has(token)) en++;
-  }
-  const wrong = lang === 'pt' ? en : pt;
-  const expected = lang === 'pt' ? pt : en;
-  if (wrong >= 9 && wrong >= expected * 2 + 4) {
-    throw new ReadingError('O modelo retornou a interpretação em idioma divergente.');
   }
   return reading;
 }
@@ -748,9 +692,7 @@ async function interpret(request, env, origin, debug = false, requestId = newReq
       const result = await withTimeout(ai.run(model.id, options), slice, model.id);
       raw = result;
 
-      const interpretacao = verifyReadingLanguage(
-        validateReading(extractReading(result), payload.tipo, payload), payload.idioma
-      );
+      const interpretacao = validateReading(extractReading(result), payload.tipo, payload);
       let narrationToken = null;
       const secret = narrationSecret(env);
       if (secret && env.ELEVENLABS_API_KEY) {
@@ -763,7 +705,6 @@ async function interpret(request, env, origin, debug = false, requestId = newReq
         fallbacksUsed: failures.length,
         ...(debug ? { debug: { chain: MODEL_CHAIN.map(entry => entry.id), failures } } : {}),
         tipo: payload.tipo,
-        idioma: payload.idioma,
         pergunta: payload.pergunta,
         interpretacao,
         narrationToken,
