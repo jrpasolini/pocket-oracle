@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'pocket-oracle-';
-const CACHE_NAME = 'pocket-oracle-v20-i18n-labels-20261016';
+const CACHE_NAME = 'pocket-oracle-v21-accessibility-20261017';
 
 const CORE_ASSETS = [
   './',
@@ -14,6 +14,7 @@ const CORE_ASSETS = [
   './js/cards.en.js',
   './js/i18n.js',
   './js/app.js',
+  './js/accessibility.js',
   './js/tailwindcss.js',
   './icons/icon-180.png',
   './icons/icon-192.png',
