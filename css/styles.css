@@ -1657,7 +1657,7 @@ html[data-theme="dark"] .toolbar-button-primary {
    primary/disabled states. Give both the same active treatment on Moon theme. */
 html[data-theme="dark"] .draw-button-primary,
 html[data-theme="dark"] .draw-button-secondary {
-    background: linear-gradient(135deg, #8e2e2e, #b0672d);
+    background: linear-gradient(135deg, #8e2e2e, #a65c2c);
     color: #fff8f0;
     border: 0;
 }
