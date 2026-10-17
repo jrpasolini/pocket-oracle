@@ -139,3 +139,44 @@ test('locale, accessibility controls and offline cache stay integrated', () => {
   assert.match(serviceWorker, /\.\/js\/accessibility\.js/);
   assert.match(serviceWorker, /pocket-oracle-v21-accessibility/);
 });
+
+
+test('moving between views focuses new heading and respects reduced motion', () => {
+  const from = appScript.indexOf('    function showView(');
+  const until = appScript.indexOf('\n    function detailSection', from);
+  assert.ok(from >= 0 && until > from, 'showView should be present');
+  const focusLog = [];
+  const scrollLog = [];
+  const views = Object.fromEntries(['home-view', 'card-detail-view', 'random-draw-view'].map(id => {
+    const heading = {
+      tabIndex: null,
+      focus(options) { focusLog.push({ id, preventScroll: options.preventScroll }); }
+    };
+    return [id, {
+      id, heading,
+      classList: { toggle() {} },
+      querySelector: selector => selector === 'h2' ? heading : null
+    }];
+  }));
+  let stops = 0;
+  const sandbox = {
+    document: {
+      getElementById: id => views[id],
+      querySelectorAll: () => []
+    },
+    window: {
+      PocketAccessibility: { stop() { stops++; } },
+      matchMedia: () => ({ matches: true }),
+      scrollTo: options => scrollLog.push(options)
+    },
+    closeExploreMenu() {},
+    resetDraw() {}
+  };
+  runInNewContext(appScript.slice(from, until) + '\n;globalThis.navigate = showView;', sandbox);
+  sandbox.navigate('card-detail-view', true);
+  assert.equal(stops, 1);
+  assert.equal(views['card-detail-view'].heading.tabIndex, -1);
+  assert.equal(focusLog[0].id, 'card-detail-view');
+  assert.equal(focusLog[0].preventScroll, true);
+  assert.equal(scrollLog[0].behavior, 'instant');
+});
