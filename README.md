@@ -55,8 +55,8 @@ The deck itself, the search, the filters and the draws all work **offline** — 
 
 Work in progress, being built in public during the challenge week.
 
-## License
+## License and third-party notices
 
-Released under the **MIT License** — see [`LICENSE`](LICENSE).
+Original Pocket Oracle code and card texts are released under the [MIT License](LICENSE), attributed to Antonio Pasolini. This does not override the separate licences of third-party materials.
 
-[`NOTICE`](NOTICE) records exactly what the licence covers: **all source code and the 78-card dataset** (the card texts were written by Antonio Pasolini), plus the provenance of the card images (public domain, via Wikimedia Commons). The origin project is credited above and shares the same author.
+The repository also bundles Tailwind CSS JavaScript (MIT, Tailwind Labs), Lora fonts and Playfair Display fonts (SIL Open Font License 1.1); Rider-Waite illustrations are documented as public domain. See [NOTICE](NOTICE) for attribution and the full bundled licence notices.

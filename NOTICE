@@ -1,37 +1,33 @@
 # NOTICE — Pocket Oracle
 
-Pocket Oracle is released under the **MIT License** (see [`LICENSE`](LICENSE)).
-This file records what the licence covers and where the material came from.
+The original Pocket Oracle code, documentation and original card texts are released under the [project MIT licence](LICENSE), attributed to Antonio Pasolini. This MIT notice does not relicense third-party materials bundled in this repository.
 
-## What the MIT licence covers
+## Project-owned material
 
-- **All source code** in this repository: the Cloudflare Worker, the front-end,
-  the i18n layer, the build/deploy configuration and the automated tests.
-- **The card dataset** (`js/cards.js`, `js/cards.en.js`): the descriptions,
-  image interpretations, keywords, quick answers and correspondences of the 78
-  cards. These texts were **written by Antonio Pasolini** (research-based
-  original writing, 2026), including the English translation.
+- Original front-end and Cloudflare Worker code, original styles, translations, build/deploy configuration, documentation, and tests, **excluding the third-party files named below**.
+- Original Rider-Waite card texts and data in `js/cards.js` and `js/cards.en.js`, attributed to Antonio Pasolini, including the English adaptation.
 
-## Provenance
+## Third-party files and their own licences
 
-- **Project origin.** Pocket Oracle grows out of
-  [Tarot Rider-Waite](https://github.com/jrpasolini/Tarot-Rider-Waite), an
-  earlier interactive Portuguese-language grimoire by the same author. The draw
-  flow and the overall concept started there; this repository is a new build
-  begun on 2026-10-15. The origin project is credited in the README ("Origin and
-  credit"). Because both projects share the same author, that reuse does not
-  introduce third-party rights.
-- **Card images.** The Rider-Waite card images are in the **public domain**,
-  obtained from a collection based on the
-  [Wikimedia Commons](https://commons.wikimedia.org/) archive. They are not
-  covered by the MIT licence above — they are already free of copyright.
-- **Third-party services.** The app calls Cloudflare Workers AI (open-weight
-  models) and, optionally, ElevenLabs for narration. Those services are governed
-  by their own terms; no third-party code or data is vendored into this
-  repository.
+| Component | Bundled files | Terms and copyright | Complete licence notice |
+| --- | --- | --- | --- |
+| Tailwind CSS browser distribution | `js/tailwindcss.js` | MIT; copyright Tailwind Labs, Inc. | [Tailwind MIT](js/tailwindcss.LICENSE.txt) |
+| Lora font | `fonts/lora-400.ttf`, `fonts/lora-500.ttf`, `fonts/lora-600.ttf` | SIL Open Font License 1.1; copyright 2011 The Lora Project Authors; Reserved Font Name "Lora" | [Lora OFL](fonts/OFL-Lora.txt) |
+| Playfair Display font | `fonts/playfair-display-700.ttf` | SIL Open Font License 1.1; copyright 2017 The Playfair Display Project Authors; Reserved Font Name "Playfair Display" | [Playfair Display OFL](fonts/OFL-Playfair-Display.txt) |
 
-## Authorship note
+The licence texts above are reproduced from the maintainers' published files:
+- https://github.com/tailwindlabs/tailwindcss/blob/main/LICENSE
+- https://github.com/google/fonts/blob/main/ofl/lora/OFL.txt
+- https://github.com/google/fonts/blob/main/ofl/playfairdisplay/OFL.txt
 
-Built by **Antonio Pasolini** in collaboration with **Melissa**, an AI agent.
-The MIT copyright line names the human rights holder; the collaboration credit
-is recorded here and in the README.
+The fonts remain licensed under the OFL, not under the project's MIT licence. Retain their corresponding notices when redistributing them.
+
+## Provenance and separate rights
+
+- **Earlier project:** [Tarot Rider-Waite](https://github.com/jrpasolini/Tarot-Rider-Waite), developed by Antonio Pasolini; the project concept and card data were adapted for Pocket Oracle.
+- **Card illustrations:** Rider-Waite illustrations are described as public domain and sourced from a collection based on [Wikimedia Commons](https://commons.wikimedia.org/). The repository's MIT notice does not claim copyright in those images.
+- **External services:** Cloudflare Workers AI and ElevenLabs supply APIs subject to their own terms. Unlike those remote services, the Tailwind JavaScript and font binaries listed above are actually included in this repository.
+
+## Authorship
+
+Built by Antonio Pasolini in collaboration with Melissa, an AI agent. Copyright for the original work belongs to the identified rights holder; copyright for third-party materials remains with their respective owners.
