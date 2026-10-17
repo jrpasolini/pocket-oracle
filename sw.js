@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'pocket-oracle-';
-const CACHE_NAME = 'pocket-oracle-v24-zodiac-filter-20261017';
+const CACHE_NAME = 'pocket-oracle-v25-dark-draw-contrast-20261017';
 
 const CORE_ASSETS = [
   './',
