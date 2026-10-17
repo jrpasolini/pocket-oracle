@@ -1,0 +1,37 @@
+# NOTICE — Pocket Oracle
+
+Pocket Oracle is released under the **MIT License** (see [`LICENSE`](LICENSE)).
+This file records what the licence covers and where the material came from.
+
+## What the MIT licence covers
+
+- **All source code** in this repository: the Cloudflare Worker, the front-end,
+  the i18n layer, the build/deploy configuration and the automated tests.
+- **The card dataset** (`js/cards.js`, `js/cards.en.js`): the descriptions,
+  image interpretations, keywords, quick answers and correspondences of the 78
+  cards. These texts were **written by Antonio Pasolini** (research-based
+  original writing, 2026), including the English translation.
+
+## Provenance
+
+- **Project origin.** Pocket Oracle grows out of
+  [Tarot Rider-Waite](https://github.com/jrpasolini/Tarot-Rider-Waite), an
+  earlier interactive Portuguese-language grimoire by the same author. The draw
+  flow and the overall concept started there; this repository is a new build
+  begun on 2026-10-15. The origin project is credited in the README ("Origin and
+  credit"). Because both projects share the same author, that reuse does not
+  introduce third-party rights.
+- **Card images.** The Rider-Waite card images are in the **public domain**,
+  obtained from a collection based on the
+  [Wikimedia Commons](https://commons.wikimedia.org/) archive. They are not
+  covered by the MIT licence above — they are already free of copyright.
+- **Third-party services.** The app calls Cloudflare Workers AI (open-weight
+  models) and, optionally, ElevenLabs for narration. Those services are governed
+  by their own terms; no third-party code or data is vendored into this
+  repository.
+
+## Authorship note
+
+Built by **Antonio Pasolini** in collaboration with **Melissa**, an AI agent.
+The MIT copyright line names the human rights holder; the collaboration credit
+is recorded here and in the README.

@@ -54,3 +54,9 @@ The deck itself, the search, the filters and the draws all work **offline** — 
 ## Status
 
 Work in progress, being built in public during the challenge week.
+
+## License
+
+Released under the **MIT License** — see [`LICENSE`](LICENSE).
+
+[`NOTICE`](NOTICE) records exactly what the licence covers: **all source code and the 78-card dataset** (the card texts were written by Antonio Pasolini), plus the provenance of the card images (public domain, via Wikimedia Commons). The origin project is credited above and shares the same author.
