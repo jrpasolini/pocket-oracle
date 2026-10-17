@@ -93,7 +93,7 @@ test('the original parchment theme remains default and is switchable', () => {
 test('stored dark preference survives reinitialization', () => {
   const ui = harness({ initialTheme: 'dark' });
   assert.equal(ui.root.dataset.theme, 'dark');
-  assert.equal(ui.themeButton.span.textContent, '☀');
+  assert.equal(ui.themeButton.span.textContent, '☀︎');
 });
 
 test('browser speech is opt-in and uses the selected language', () => {
