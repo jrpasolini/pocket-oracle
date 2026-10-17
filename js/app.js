@@ -138,13 +138,33 @@
         ].join(' '));
     }
 
+    // Zodiac signs are filter values, not full metadata strings. A card may
+    // belong to several signs (e.g. "Fogo (Áries, Leão, Sagitário)") and
+    // must appear under EACH sign. Keep the original card.signo unchanged
+    // for its detail view and for canonical Worker correspondence.
+    const zodiacByLanguage = {
+        pt: ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra',
+             'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'],
+        en: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra',
+             'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
+    };
+
+    function cardZodiacSigns(card) {
+        const language = window.I18N?.lang === 'pt' ? 'pt' : 'en';
+        const terms = new Set(normalize(card.signo).split(/[^a-z]+/));
+        return zodiacByLanguage[language].filter(sign => terms.has(normalize(sign)));
+    }
+
     function populateExploreMenu() {
         const content = exploreMenu.firstElementChild;
         content.innerHTML = '';
 
         Object.entries(propertyMap).forEach(([property, labelKey]) => {
-            const values = [...new Set(cards.map(card => card[property]).filter(Boolean))]
-                .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            const rawValues = property === 'signo'
+                ? cards.flatMap(cardZodiacSigns)
+                : cards.map(card => card[property]);
+            const values = [...new Set(rawValues.filter(Boolean))]
+                .sort((a, b) => a.localeCompare(b, window.I18N?.lang === 'en' ? 'en' : 'pt-BR'));
             const heading = document.createElement('p');
             heading.className = 'px-4 py-2 text-sm font-bold text-amber-700';
             heading.textContent = t(labelKey);
@@ -199,7 +219,9 @@
             filterInfo.textContent = `${t('filter_results')} “${searchInput.value.trim()}”`;
             filterInfo.classList.remove('hidden');
         } else if (currentFilter.type && currentFilter.value) {
-            visible = cards.filter(card => card[currentFilter.type] === currentFilter.value);
+            visible = cards.filter(card => currentFilter.type === 'signo'
+                ? cardZodiacSigns(card).includes(currentFilter.value)
+                : card[currentFilter.type] === currentFilter.value);
             filterInfo.textContent = `${propertyLabel(currentFilter.type)}: ${currentFilter.value}`;
             filterInfo.classList.remove('hidden');
         } else {
