@@ -180,3 +180,55 @@ test('moving between views focuses new heading and respects reduced motion', () 
   assert.equal(focusLog[0].preventScroll, true);
   assert.equal(scrollLog[0].behavior, 'instant');
 });
+
+
+test('language picker follows Moon theme with readable selected state and unchanged flag artwork', () => {
+  const css = readFileSync(new URL('../css/styles.css', import.meta.url), 'utf8');
+
+  // Light theme keeps its original parchment container and gold selected state.
+  assert.match(css, /\.language-selector\s*\{[^}]*background:\s*rgba\(255,\s*250,\s*239,\s*\.82\)/);
+  assert.match(css, /\.language-option\[aria-pressed="true"\]\s*\{/);
+
+  const rules = selector => {
+    const start = css.lastIndexOf(selector + ' {');
+    assert.ok(start >= 0, 'Missing selector: ' + selector);
+    return css.slice(start, css.indexOf('}', start));
+  };
+  const container = rules('html[data-theme="dark"] .language-selector');
+  const idle = rules('html[data-theme="dark"] .language-selector .language-option');
+  const selected = rules('html[data-theme="dark"] .language-selector .language-option[aria-pressed="true"]');
+  const focus = rules('html[data-theme="dark"] .language-selector .language-option:focus-visible');
+  assert.match(container, /background:\s*#[a-f\d]{6}/i);
+  assert.match(idle, /background:\s*transparent/);
+  assert.match(selected, /background:\s*#[a-f\d]{6}/i);
+  assert.match(selected, /box-shadow:\s*inset/);
+  assert.match(focus, /outline:\s*3px solid/);
+
+  const hex = (rule, key) => {
+    const match = rule.match(new RegExp('(?:^|\\n)\\s*' + key + ':\\s*#([a-f0-9]{6})\\s*;', 'i'));
+    assert.ok(match, 'Missing ' + key);
+    return match[1];
+  };
+  const luminance = color => {
+    const components = [0, 2, 4].map(i => parseInt(color.slice(i, i + 2), 16) / 255)
+      .map(channel => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+    return components[0] * .2126 + components[1] * .7152 + components[2] * .0722;
+  };
+  const ratio = (a, b) => {
+    const l1 = luminance(a);
+    const l2 = luminance(b);
+    return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05);
+  };
+  assert.ok(ratio(hex(selected, 'border-color'), hex(selected, 'background')) >= 3,
+    'The selected-language outline must be distinguishable');
+  assert.ok(ratio(hex(idle, 'color'), hex(container, 'background')) >= 4.5,
+    'Any visible text/indicators must remain readable');
+
+  // Both flag SVGs are fixed artwork, and language selection is unrelated to theme.
+  const options = html.match(/class="toolbar-button language-option"/g) || [];
+  assert.equal(options.length, 2);
+  assert.match(html, /data-lang-select="pt"/);
+  assert.match(html, /data-lang-select="en"/);
+  assert.match(html, /class="language-flag"/);
+  assert.match(html, /aria-pressed="true"/);
+});
