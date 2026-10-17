@@ -155,6 +155,7 @@
                 item.type = 'button';
                 item.className = 'w-full text-left text-amber-800 block px-4 py-2 text-sm hover:bg-amber-100';
                 item.textContent = value;
+                item.setAttribute('translate', 'no');
                 item.addEventListener('click', () => {
                     currentFilter = { type: property, value };
                     searchInput.value = '';
@@ -306,7 +307,7 @@
             </div>
             <div class="md:col-span-2 space-y-5">
                 <div>
-                    <div class="flex flex-wrap items-center gap-3 mb-3"><span class="element-pill element-${cls}">${escapeHtml(card.elemento)}</span><span class="text-sm opacity-75">${escapeHtml(card.naipe)} • ${escapeHtml(cardNumber(card))}</span></div>
+                    <div class="flex flex-wrap items-center gap-3 mb-3"><span class="element-pill element-${cls}">${escapeHtml(card.elemento)}</span><span translate="no" class="text-sm opacity-75">${escapeHtml(card.naipe)} • ${escapeHtml(cardNumber(card))}</span></div>
                     <h2 translate="no" class="font-playfair text-4xl md:text-5xl leading-tight">${escapeHtml(card.nome)}</h2>
                 </div>
                 ${detailSection(t('detail_keywords'), `<p class="italic">${joinList(card.palavras_chave)}.</p>`)}
