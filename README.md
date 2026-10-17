@@ -51,9 +51,21 @@ The deck itself, the search, the filters and the draws all work **offline** — 
 - `sw.js` — service worker (offline support)
 - `icons/` — app icons at 180, 192 and 512 px
 
+## Accessibility experience (Hacktoberfest 2026 release)
+
+The Sun/Moon control switches between the existing parchment theme and an optional dark palette. Preferences are stored locally in the browser, independently of the PT/EN selection.
+
+A second control reads selected text (when selected inside the visible content) or a short description of the active view using the browser's built-in `speechSynthesis`. On a card detail page, **Listen to this card** reads the card text. The app does not request microphone access or call ElevenLabs for this feature. The quality, availability, and offline behavior of system voices vary by browser and operating system; some voices may rely on network services.
+
+The generated AI interpretation remains a separate opt-in ElevenLabs narration experience, with a small provider credit. Each interpretation attributes the actual backend model returned by `/interpretar` (Gemma or Llama). Browser read-aloud stops when a premium narration starts or when the language/view changes.
+
+These features complement, **not replace**, operating-system screen readers such as NVDA, VoiceOver, and TalkBack. Keyboard, visual contrast, device voice support, and screen-reader usability require manual testing before any accessibility conformance claims.
+
+**Language behavior:** The interface and static deck offer English and Brazilian Portuguese. The open-weight model may answer an English or Portuguese question in that same language, even when the interface is set differently; this was observed during manual testing, not guaranteed by a response-language contract. Other question languages may receive a response in the interface language. The optional ElevenLabs narration currently uses the interface locale as its `language_code`, not automatic detection of the AI response language; do not assume multilingual narration is guaranteed.
+
 ## Status
 
-Work in progress, being built in public during the challenge week.
+Hacktoberfest 2026 challenge release candidate. Post-merge changes are reserved for critical regressions; planned enhancements will be evaluated after the challenge judging.
 
 ## License and third-party notices
 

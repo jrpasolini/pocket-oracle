@@ -1756,7 +1756,7 @@ const cardDatabase = [
         "naipe": "Copas",
         "numero": 9,
         "imagem": "images/cards/45-nove-de-copas.jpg",
-        "descricao": "O Nove de Copas é conhecida como a 'carta dos desejos'. Um homem satisfeito senta-se diante de nove taças arrumadas em um arco, representando a realização de desejos, o contentamento e a satisfação. Esta carta indica que seus sonhos estão se tornando realidade. É um momento de felicidade, abundância e de desfrutar dos prazeres da vida. Você tem tudo o que precisa para ser feliz.",
+        "descricao": "O Nove de Copas é conhecido como a 'carta dos desejos'. Um homem satisfeito senta-se diante de nove taças arrumadas em um arco, representando a realização de desejos, o contentamento e a satisfação. Esta carta indica que seus sonhos estão se tornando realidade. É um momento de felicidade, abundância e de desfrutar dos prazeres da vida. Você tem tudo o que precisa para ser feliz.",
         "interpretacao_imagem": "O homem sorridente e de braços cruzados exala autossatisfação e contentamento. As nove taças atrás dele são suas conquistas e bênçãos. A cortina azul representa a abundância emocional que ele alcançou. Ele está em uma posição de conforto e segurança.",
         "palavras_chave": [
             "Realização de desejos",

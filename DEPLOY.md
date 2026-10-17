@@ -50,7 +50,7 @@ wrangler deploy --config wrangler.toml
 2. Confira `OPTIONS /interpretar` das origens autorizadas; o preflight deve responder 204. Uma origem ilegítima deve ser recusada.
 3. Envie JSON inválido para `/interpretar` para conferir resposta 4xx sem chamada ao modelo.
 4. Com aprovação, execute uma leitura real e confirme `model`, `fallbacksUsed` e o esquema JSON. Com narração configurada, valide `/narrar` com um token recém-assinado.
-5. Confira a publicação do frontend e a atualização do service worker: o cache **v19** deve conter `js/app.js` com `API_BASE = 'https://api.jrpasolini.tech'`. Teste também uma instalação pré-existente da PWA.
+5. Confira a publicação do frontend e a atualização do service worker: o cache **`pocket-oracle-v28-moon-language-selector-20261017`** deve conter `js/app.js` com `API_BASE = 'https://api.jrpasolini.tech'`, além de `js/accessibility.js`. Teste também uma instalação pré-existente da PWA.
 6. Valide as configurações WAF pela API; no handover havia uma regra de **30 requisições / 10 segundos** para todo o hostname `api.jrpasolini.tech`. Verifique se `OPTIONS`, `GET /health` e outros caminhos são contados; evite rajadas artificiais de produção.
 7. Confirme rotas `workers.dev`, Version/Preview URLs e DNS órfãos. Não remova registros TXT vinculados a outros serviços sem atribuição confirmada.
 
@@ -70,3 +70,9 @@ wrangler deploy --config wrangler.toml
 Não exponha secrets, payloads pessoais ou narrações em logs. O `requestId` permite correlacionar incidentes sem imprimir perguntas. `CORS` não substitui autenticação e o limitador em memória do Worker não é distribuído.
 
 Se houver regressão após implantar o Worker, use a versão anterior conhecida, preserve os bindings e confirme a rota atual antes de reverter. Não reative `workers.dev` como atalho sem avaliar a exposição fora do WAF.
+
+## Congelamento da versão para julgamento
+
+Após o merge da branch de acessibilidade, registre o SHA da `main`, verifique a publicação do frontend em cada hospedagem e faça o deploy do Worker **separadamente, mediante autorização e conferência de bindings/rotas**. O merge no GitHub não comprova que o Worker implantado corresponde ao arquivo do repositório. Até o resultado do júri, não incorporar novas funcionalidades; corrigir apenas regressões críticas, com evidência e aprovação específica.
+
+As perguntas podem ser escritas em idiomas diferentes do idioma da interface; a camada de IA não bloqueia respostas válidas por divergência linguística. A narração ElevenLabs ainda recebe `language_code` derivado de `idioma` da interface, portanto a pronúncia em respostas multilíngues depende do serviço e não é uma garantia desta versão.

@@ -432,15 +432,24 @@ body::before {
 
 .draw-button:hover { transform: translateY(-2px) scale(1.01); }
 
-.draw-button-primary {
-    background: linear-gradient(135deg, #8e2e2e, #b0672d);
+/* Both choices are equally enabled actions in the Sun theme as well.
+   Match the Moon palette, including its 4.5:1+ contrast at both ends. */
+.draw-button-primary,
+.draw-button-secondary {
+    background: linear-gradient(135deg, #8e2e2e, #a65c2c);
     color: #fff8f0;
+    border: 0;
 }
 
-.draw-button-secondary {
-    background: rgba(255, 252, 246, .9);
-    color: var(--ink);
-    border: 1px solid rgba(120, 84, 50, .16);
+/* A visibly muted appearance is reserved for an actually disabled button
+   (temporarily during shuffle), never for the three-card action itself. */
+.draw-button:disabled {
+    background: #d9d3c9;
+    color: #46372b;
+    opacity: 1;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
 
 .draw-hint {
@@ -1521,4 +1530,263 @@ button,
 
 .element-inline-dot.element-terra {
     background: #52633c;
+}
+
+
+
+/* ===== Pocket Oracle accessibility — Sun / Moon and local read-aloud ===== */
+/* The default light theme keeps the existing parchment identity intact. */
+.skip-link {
+    position: fixed;
+    top: .75rem;
+    left: .75rem;
+    z-index: 100;
+    padding: .7rem 1rem;
+    border-radius: .7rem;
+    background: #fff9e9;
+    color: #3b2522;
+    border: 3px solid #8c4d22;
+    transform: translateY(-150%);
+}
+.skip-link:focus { transform: translateY(0); }
+
+.accessibility-controls {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+}
+.accessibility-toggle {
+    display: inline-grid;
+    place-items: center;
+    min-width: 48px;
+    min-height: 48px;
+    padding: .5rem;
+    border-radius: .95rem;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-strong);
+    color: var(--ink);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+}
+/* The Sun control uses text-presentation glyph (not a platform emoji)
+   so its golden color is consistent across desktop and mobile. */
+html[data-theme="dark"] #theme-toggle [aria-hidden="true"] {
+    color: #ffd34d;
+    text-shadow: 0 0 10px rgba(255, 211, 77, .35);
+}
+.accessibility-toggle:hover { box-shadow: 0 5px 16px rgba(0,0,0,.17); }
+.accessibility-toggle:disabled { cursor: not-allowed; opacity: .55; }
+.accessibility-toggle:focus-visible,
+#read-card-button:focus-visible,
+.skip-link:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+}
+.ai-reading-model-credit {
+    margin-top: 1.25rem;
+    padding-top: .9rem;
+    border-top: 1px solid var(--panel-border);
+    color: var(--ink-soft);
+    font-size: .82rem;
+    font-style: italic;
+    line-height: 1.6;
+}
+.ai-reading-provider-credit {
+    color: var(--ink-soft);
+    font-size: .78rem;
+    line-height: 1.55;
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --parchment: #161923;
+    --parchment-dark: #202633;
+    --ink: #f4edde;
+    --ink-soft: #e0d1ba;
+    --wine: #f0c78c;
+    --wine-deep: #f2d3a5;
+    --gold: #e8bf76;
+    --gold-soft: #efd49c;
+    --panel: rgba(32, 38, 52, .94);
+    --panel-strong: #252d3b;
+    --panel-border: rgba(234, 204, 146, .35);
+    --shadow-soft: 0 20px 48px rgba(0,0,0,.31);
+    --shadow-card: 0 15px 32px rgba(0,0,0,.32);
+    --focus-ring: #f2ca75;
+}
+html[data-theme="dark"] body {
+    color: var(--ink);
+    background:
+        radial-gradient(circle at 7% 10%, rgba(143, 95, 46, .18), transparent 30rem),
+        radial-gradient(circle at 85% 85%, rgba(73, 81, 141, .19), transparent 30rem),
+        linear-gradient(180deg, #131722 0%, #1d2530 100%);
+}
+html[data-theme="dark"] body::before {
+    background: linear-gradient(180deg, rgba(255,255,255,.015), transparent 25%, rgba(0,0,0,.08));
+    box-shadow: inset 0 0 100px rgba(0,0,0,.14);
+}
+html[data-theme="dark"] .hero-header h1,
+html[data-theme="dark"] #home-view h2,
+html[data-theme="dark"] #random-draw-view h2,
+html[data-theme="dark"] .site-footer > p:first-child {
+    color: var(--ink) !important;
+}
+html[data-theme="dark"] .hero-subtitle,
+html[data-theme="dark"] .section-description,
+html[data-theme="dark"] .draw-hint,
+html[data-theme="dark"] .ai-reading-hint {
+    color: var(--ink-soft);
+}
+html[data-theme="dark"] .meta-chip,
+html[data-theme="dark"] .oracle-nav {
+    color: var(--ink);
+    background: rgba(35, 42, 55, .96);
+    border-color: var(--panel-border);
+    box-shadow: 0 12px 30px rgba(0,0,0,.22);
+}
+html[data-theme="dark"] .toolbar-button-secondary,
+html[data-theme="dark"] .toolbar-button-tertiary,
+html[data-theme="dark"] .toolbar-button-secondary:hover,
+html[data-theme="dark"] .toolbar-button-tertiary:hover,
+html[data-theme="dark"] .toolbar-search,
+html[data-theme="dark"] #explore-menu {
+    color: var(--ink);
+    background: #2d3545;
+    border-color: var(--panel-border);
+}
+html[data-theme="dark"] .toolbar-search::placeholder { color: #d4c6b3; opacity: 1; }
+
+/* Keep the 🇧🇷 / 🇺🇸 language selector consistent with the Moon palette.
+   The flags retain their true colors; only their container and selected
+   state change with the visual theme. Sun retains its original styling. */
+html[data-theme="dark"] .language-selector {
+    background: #283141;
+    border-color: #c0a776;
+    box-shadow: 0 10px 18px rgba(0, 0, 0, .24);
+}
+
+html[data-theme="dark"] .language-selector .language-option {
+    color: #f5e9d6;
+    background: transparent;
+    border-color: transparent;
+}
+
+html[data-theme="dark"] .language-selector .language-option:hover {
+    background: #3c475a;
+}
+
+html[data-theme="dark"] .language-selector .language-option[aria-pressed="true"] {
+    background: #465064;
+    border-color: #f0c77e;
+    box-shadow: inset 0 0 0 1px #f0c77e;
+}
+
+html[data-theme="dark"] .language-selector .language-option:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+html[data-theme="dark"] .toolbar-button-primary {
+    background: #a14e32;
+    color: #fffaf2;
+}
+/* The two draw actions are equally available choices, not
+   primary/disabled states. Give both the same active treatment on Moon theme. */
+html[data-theme="dark"] .draw-button-primary,
+html[data-theme="dark"] .draw-button-secondary {
+    background: linear-gradient(135deg, #8e2e2e, #a65c2c);
+    color: #fff8f0;
+    border: 0;
+}
+
+/* Only an actual disabled attribute uses the subdued appearance
+   while the shuffle animation is running. Keep its label readable. */
+html[data-theme="dark"] .draw-button:disabled {
+    background: #414b5e;
+    color: #fff8f0;
+    opacity: 1;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+html[data-theme="dark"] .draw-button:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+}
+
+/* Card captions are shared by one- and three-card spreads. In Moon mode,
+   the original pale pill backgrounds conflicted with light theme tokens. */
+html[data-theme="dark"] .draw-position-label,
+html[data-theme="dark"] .draw-card-label {
+    background: #303949;
+    color: #f5e7cf;
+    border: 1px solid #b9935b;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .25);
+}
+
+/* Keep the sequence numbers legible as well as Past / Present / Future. */
+html[data-theme="dark"] .draw-position-label span {
+    background: #f0c77e;
+    color: #232b3b;
+}
+
+
+html[data-theme="dark"] .home-panel,
+html[data-theme="dark"] .draw-panel {
+    background: linear-gradient(145deg, rgba(39,46,60,.99), rgba(28,34,45,.99));
+}
+html[data-theme="dark"] .oracle-panel::before {
+    border-color: rgba(234,204,146,.20);
+}
+html[data-theme="dark"] .filter-banner,
+html[data-theme="dark"] .oracle-question-panel,
+html[data-theme="dark"] .ai-reading-result {
+    background: #282f3d;
+    color: var(--ink);
+    border-color: var(--panel-border);
+}
+html[data-theme="dark"] .oracle-question-input,
+html[data-theme="dark"] .oracle-question-input:focus {
+    background: #1b2230;
+    color: var(--ink);
+    border-color: #9c835d;
+}
+html[data-theme="dark"] .oracle-question-meta,
+html[data-theme="dark"] .ai-reading-question,
+html[data-theme="dark"] .ai-reading-opening,
+html[data-theme="dark"] .ai-reading-disclaimer {
+    color: var(--ink-soft);
+}
+html[data-theme="dark"] .ai-reading-card,
+html[data-theme="dark"] .ai-reading-section {
+    background: #333b4d;
+    border-color: var(--panel-border);
+}
+html[data-theme="dark"] .ai-reading-highlight { background: #3c3844; }
+html[data-theme="dark"] .ai-reading-answer { background: #393242; }
+html[data-theme="dark"] .ai-reading-text,
+html[data-theme="dark"] .ai-reading-section-title,
+html[data-theme="dark"] .ai-reading-loading strong,
+html[data-theme="dark"] .ai-reading-position {
+    color: var(--ink);
+}
+html[data-theme="dark"] .oracle-card-frame {
+    background: linear-gradient(145deg, #414a59, #252b39);
+    border-color: var(--panel-border);
+}
+html[data-theme="dark"] .card-title-home { color: var(--ink); }
+html[data-theme="dark"] .site-footer { color: var(--ink-soft); }
+html[data-theme="dark"] .footer-credits { color: var(--ink-soft); }
+html[data-theme="dark"] .footer-credits a { color: #f5d19b; }
+html[data-theme="dark"] .footer-credits a:hover { color: #fff3dd; }
+
+/* Preserve the elemental card backgrounds, including their own light/dark
+   text rules, so theme switching does not destroy card artwork or contrast. */
+@media (max-width: 760px) {
+    .accessibility-controls { width: auto; }
+    .ai-reading-model-credit { font-size: .8rem; }
 }

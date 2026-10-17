@@ -219,3 +219,220 @@ test('resetting a draw cancels previous flip and completion timers', () => {
     'Only the current draw completion enables interpretation');
   assert.equal(view.timers.pending(), 0);
 });
+
+
+function zodiacOptions(view, language) {
+  const menu = view.elements.get('explore-menu').firstElementChild.children;
+  const label = language === 'pt' ? 'Signo' : 'Sign';
+  const start = menu.findIndex(item => item.textContent === label);
+  assert.ok(start >= 0, 'Missing zodiac menu heading: ' + label);
+  const end = menu.findIndex((item, index) =>
+    index > start && item.className === 'border-amber-900/10');
+  assert.ok(end > start, 'Missing zodiac menu divider');
+  return menu.slice(start + 1, end);
+}
+
+const zodiacNames = {
+  pt: ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
+    'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'],
+  en: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
+};
+
+function zodiacTerms(value) {
+  return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().split(/[^a-z]+/);
+}
+
+test('zodiac filter lists exactly 12 individual signs in both languages', () => {
+  const view = frontend('pt');
+  for (const lang of ['pt', 'en']) {
+    if (view.api.lang !== lang) view.api.setLang(lang);
+    const options = zodiacOptions(view, lang);
+    assert.equal(options.length, 12, '12 options in ' + lang);
+    const shown = options.map(option => option.textContent);
+    assert.deepEqual(new Set(shown), new Set(zodiacNames[lang]));
+    assert.ok(shown.every(value => !/[\/,()]/.test(value)),
+      'No compound entries or parenthetical metadata');
+    assert.ok(!shown.includes(lang === 'pt' ? 'Júpiter' : 'Jupiter'),
+      'A planet is not a zodiac sign');
+  }
+});
+
+test('all zodiac filters match individual tokens in compound metadata, never the entire string', () => {
+  for (const lang of ['pt', 'en']) {
+    const view = frontend(lang);
+    const deck = view.api.cards();
+    const options = zodiacOptions(view, lang);
+
+    for (const option of options) {
+      const sign = option.textContent;
+      option.listeners.click();
+      const found = cards(view).map(card => card.image);
+      // Convert VM-realm deck array to a host-realm array before strict comparison.
+      const expected = Array.from(deck).filter(card =>
+        zodiacTerms(card.signo).includes(zodiacTerms(sign)[0]))
+        .map(card => card.imagem);
+      assert.deepEqual(found, expected, lang + '/' + sign);
+      assert.ok(found.length > 0, 'At least one card should belong to ' + sign);
+    }
+
+    // Includes parenthesized entries such as "Fogo (Áries, Leão, Sagitário)"
+    // and English "Fire (Aries, Leo, Sagittarius)" without rewriting data.
+    const multizodiac = lang === 'pt'
+      ? { name: 'Pajem de Paus', signs: ['Áries', 'Leão', 'Sagitário'] }
+      : { name: 'Page of Wands', signs: ['Aries', 'Leo', 'Sagittarius'] };
+    const expectedCard = deck.find(card => card.nome === multizodiac.name);
+    assert.ok(expectedCard);
+    for (const sign of multizodiac.signs) {
+      options.find(option => option.textContent === sign).listeners.click();
+      assert.ok(cards(view).some(card => card.image === expectedCard.imagem),
+        multizodiac.name + ' should appear under ' + sign);
+    }
+
+    const double = lang === 'pt'
+      ? { name: 'Cavaleiro de Espadas', signs: ['Aquário', 'Gêmeos'] }
+      : { name: 'Knight of Swords', signs: ['Aquarius', 'Gemini'] };
+    const doubleCard = deck.find(card => card.nome === double.name);
+    for (const sign of double.signs) {
+      options.find(option => option.textContent === sign).listeners.click();
+      assert.ok(cards(view).some(card => card.image === doubleCard.imagem),
+        double.name + ' should appear under ' + sign);
+    }
+  }
+});
+
+test('the separate planet filter still works for planetary-only correspondence cards', () => {
+  const view = frontend('pt');
+  const menu = view.elements.get('explore-menu').firstElementChild.children;
+  const heading = menu.findIndex(item => item.textContent === 'Planeta');
+  assert.ok(heading >= 0);
+  const planetOption = menu.slice(heading + 1).find(item => item.textContent === 'Mercúrio');
+  assert.ok(planetOption);
+  planetOption.listeners.click();
+  const magician = view.api.cards().find(card => card.nome === 'O Mago');
+  assert.ok(cards(view).some(card => card.image === magician.imagem));
+});
+
+
+test('moon theme draw actions use the same enabled color and a distinct disabled style', () => {
+  const html = read('index.html');
+  const one = html.match(/<button id="draw-button"[^>]+>/)?.[0];
+  const three = html.match(/<button id="draw-three-button"[^>]+>/)?.[0];
+  assert.ok(one && three, 'Both draw controls are present');
+  assert.doesNotMatch(one, /\sdisabled(?:\s|=|>)/i);
+  assert.doesNotMatch(three, /\sdisabled(?:\s|=|>)/i);
+
+  const sharedSelector =
+    'html[data-theme="dark"] .draw-button-primary,\n' +
+    'html[data-theme="dark"] .draw-button-secondary {';
+  const sharedStart = css.lastIndexOf(sharedSelector);
+  assert.ok(sharedStart >= 0, 'Both active controls must share one dark-theme declaration');
+  const activeRule = css.slice(sharedStart, css.indexOf('}', sharedStart));
+  const gradient = activeRule.match(/background:\s*linear-gradient\(135deg,\s*#([a-f\d]{6}),\s*#([a-f\d]{6})\)/i);
+  const textColor = activeRule.match(/\bcolor:\s*#([a-f\d]{6})/i);
+  assert.ok(gradient && textColor, 'Dark draw buttons need a shared background and text');
+  const fg = luminance(textColor[1]);
+  for (const bg of [gradient[1], gradient[2]]) {
+    const background = luminance(bg);
+    const contrast = (Math.max(fg, background) + 0.05) /
+      (Math.min(fg, background) + 0.05);
+    assert.ok(contrast >= 4.5, 'Active draw-button text contrast: ' + contrast.toFixed(2));
+  }
+
+  const disabledSelector = 'html[data-theme="dark"] .draw-button:disabled {';
+  const disabledStart = css.lastIndexOf(disabledSelector);
+  assert.ok(disabledStart > sharedStart, 'Disabled state should override the shared active appearance');
+  const disabledRule = css.slice(disabledStart, css.indexOf('}', disabledStart));
+  assert.match(disabledRule, /background:\s*#[a-f\d]{6}/i);
+  assert.match(disabledRule, /color:\s*#[a-f\d]{6}/i);
+  assert.match(disabledRule, /cursor:\s*not-allowed/);
+  assert.match(disabledRule, /opacity:\s*1/);
+});
+
+
+test('moon-theme position chips and all draw card names meet 4.5:1 contrast', () => {
+  const captionSelector =
+    'html[data-theme="dark"] .draw-position-label,\n' +
+    'html[data-theme="dark"] .draw-card-label {';
+  const captionStart = css.lastIndexOf(captionSelector);
+  assert.ok(captionStart >= 0, 'Both drawing modes should share dark caption styling');
+  const captionRule = css.slice(captionStart, css.indexOf('}', captionStart));
+
+  const numberSelector = 'html[data-theme="dark"] .draw-position-label span {';
+  const numberStart = css.lastIndexOf(numberSelector);
+  assert.ok(numberStart > captionStart, 'Three-card numbered positions need their own dark-mode contrast');
+  const numberRule = css.slice(numberStart, css.indexOf('}', numberStart));
+
+  const hexColor = (rule, property) => {
+    const match = rule.match(new RegExp('(?:^|\\n)\\s*' + property + ':\\s*#([a-f0-9]{6})\\s*;', 'i'));
+    assert.ok(match, 'Missing explicit ' + property + ' in Moon theme rule');
+    return match[1];
+  };
+  const contrast = (fg, bg) => {
+    const a = luminance(fg);
+    const b = luminance(bg);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  };
+  for (const [name, rule] of [['Card names and position labels', captionRule], ['Sequence numbers', numberRule]]) {
+    const ratio = contrast(hexColor(rule, 'color'), hexColor(rule, 'background'));
+    assert.ok(ratio >= 4.5, name + ' contrast: ' + ratio.toFixed(2));
+  }
+
+  // Ensure the shared class is actually rendered in both types of spread.
+  for (const [buttonId, count] of [['draw-button', 1], ['draw-three-button', 3]]) {
+    const view = frontend('pt');
+    view.elements.get(buttonId).listeners.click();
+    const drawn = view.elements.get('shuffle-animation-container').children;
+    assert.equal(drawn.length, count, buttonId + ' must draw the correct count');
+    for (const wrapper of drawn) {
+      assert.match(wrapper.innerHTML, /class="draw-card-label\b/);
+      if (count === 3) {
+        assert.match(wrapper.innerHTML, /class="draw-position-label"/);
+      } else {
+        assert.doesNotMatch(wrapper.innerHTML, /class="draw-position-label"/);
+      }
+    }
+  }
+});
+
+
+test('sun theme draw actions share the same enabled color and legible disabled state', () => {
+  const html = read('index.html');
+  for (const id of ['draw-button', 'draw-three-button']) {
+    const button = html.match(new RegExp('<button id="' + id + '"[^>]+>'))?.[0];
+    assert.ok(button, id + ' must exist');
+    assert.doesNotMatch(button, /\sdisabled(?:\s|=|>)/i, id + ' must start enabled');
+  }
+
+  const selector = '.draw-button-primary,\n.draw-button-secondary {';
+  const start = css.indexOf(selector);
+  assert.ok(start >= 0, 'Both light-mode draw buttons must share one declaration');
+  const rule = css.slice(start, css.indexOf('}', start));
+  const gradient = rule.match(/background:\s*linear-gradient\(135deg,\s*#([a-f\d]{6}),\s*#([a-f\d]{6})\)/i);
+  const foreground = rule.match(/\bcolor:\s*#([a-f\d]{6})/i);
+  assert.ok(gradient && foreground, 'Light draw buttons require shared colors');
+  assert.match(rule, /border:\s*0/);
+
+  const contrast = (x, y) => {
+    const a = luminance(x);
+    const b = luminance(y);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  };
+  for (const background of gradient.slice(1)) {
+    assert.ok(contrast(foreground[1], background) >= 4.5,
+      'Enabled button contrast over #' + background);
+  }
+
+  const disabledSelector = '.draw-button:disabled {';
+  const disabledStart = css.indexOf(disabledSelector);
+  assert.ok(disabledStart > start, 'Disabled appearance must override enabled styles');
+  const disabled = css.slice(disabledStart, css.indexOf('}', disabledStart));
+  const background = disabled.match(/background:\s*#([a-f\d]{6})/i)?.[1];
+  const text = disabled.match(/\bcolor:\s*#([a-f\d]{6})/i)?.[1];
+  assert.ok(background && text, 'Disabled button colors should be explicit');
+  assert.ok(contrast(text, background) >= 4.5, 'Disabled text must remain legible');
+  assert.match(disabled, /cursor:\s*not-allowed/);
+  assert.match(disabled, /opacity:\s*1/);
+  assert.notEqual(background, gradient[1], 'Disabled state must be visually distinct');
+});

@@ -138,13 +138,33 @@
         ].join(' '));
     }
 
+    // Zodiac signs are filter values, not full metadata strings. A card may
+    // belong to several signs (e.g. "Fogo (Áries, Leão, Sagitário)") and
+    // must appear under EACH sign. Keep the original card.signo unchanged
+    // for its detail view and for canonical Worker correspondence.
+    const zodiacByLanguage = {
+        pt: ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra',
+             'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'],
+        en: ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra',
+             'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
+    };
+
+    function cardZodiacSigns(card) {
+        const language = window.I18N?.lang === 'pt' ? 'pt' : 'en';
+        const terms = new Set(normalize(card.signo).split(/[^a-z]+/));
+        return zodiacByLanguage[language].filter(sign => terms.has(normalize(sign)));
+    }
+
     function populateExploreMenu() {
         const content = exploreMenu.firstElementChild;
         content.innerHTML = '';
 
         Object.entries(propertyMap).forEach(([property, labelKey]) => {
-            const values = [...new Set(cards.map(card => card[property]).filter(Boolean))]
-                .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+            const rawValues = property === 'signo'
+                ? cards.flatMap(cardZodiacSigns)
+                : cards.map(card => card[property]);
+            const values = [...new Set(rawValues.filter(Boolean))]
+                .sort((a, b) => a.localeCompare(b, window.I18N?.lang === 'en' ? 'en' : 'pt-BR'));
             const heading = document.createElement('p');
             heading.className = 'px-4 py-2 text-sm font-bold text-amber-700';
             heading.textContent = t(labelKey);
@@ -155,6 +175,7 @@
                 item.type = 'button';
                 item.className = 'w-full text-left text-amber-800 block px-4 py-2 text-sm hover:bg-amber-100';
                 item.textContent = value;
+                item.setAttribute('translate', 'no');
                 item.addEventListener('click', () => {
                     currentFilter = { type: property, value };
                     searchInput.value = '';
@@ -198,7 +219,9 @@
             filterInfo.textContent = `${t('filter_results')} “${searchInput.value.trim()}”`;
             filterInfo.classList.remove('hidden');
         } else if (currentFilter.type && currentFilter.value) {
-            visible = cards.filter(card => card[currentFilter.type] === currentFilter.value);
+            visible = cards.filter(card => currentFilter.type === 'signo'
+                ? cardZodiacSigns(card).includes(currentFilter.value)
+                : card[currentFilter.type] === currentFilter.value);
             filterInfo.textContent = `${propertyLabel(currentFilter.type)}: ${currentFilter.value}`;
             filterInfo.classList.remove('hidden');
         } else {
@@ -219,6 +242,9 @@
             item.className = 'oracle-card text-center cursor-pointer group';
             item.tabIndex = 0;
             item.setAttribute('role', 'button');
+            // Card names and suit labels are localized by our own PT/EN layer.
+            // Prevent browser auto-translation from turning "Cups" into "xícaras".
+            item.setAttribute('translate', 'no');
             item.setAttribute('aria-label', `${t('open_card')} ${card.nome}`);
             item.innerHTML = `
                 <div class="oracle-card-frame">
@@ -244,6 +270,7 @@
     }
 
     function showView(viewId, preserveDraw = false) {
+        window.PocketAccessibility?.stop();
         ['home-view', 'card-detail-view', 'random-draw-view'].forEach(id => {
             document.getElementById(id).classList.toggle('hidden', id !== viewId);
         });
@@ -252,7 +279,17 @@
         });
         if (viewId !== 'home-view') closeExploreMenu();
         if (viewId === 'random-draw-view' && !preserveDraw) resetDraw();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Focus must follow a client-side view change; otherwise keyboard and
+        // screen-reader users may remain focused inside a now-hidden section.
+        const view = document.getElementById(viewId);
+        const heading = view?.querySelector('h2');
+        if (heading) {
+            heading.tabIndex = -1;
+            heading.focus?.({ preventScroll: true });
+        }
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduceMotion ? 'instant' : 'smooth' });
     }
 
     function detailSection(title, body) {
@@ -292,8 +329,8 @@
             </div>
             <div class="md:col-span-2 space-y-5">
                 <div>
-                    <div class="flex flex-wrap items-center gap-3 mb-3"><span class="element-pill element-${cls}">${escapeHtml(card.elemento)}</span><span class="text-sm opacity-75">${escapeHtml(card.naipe)} • ${escapeHtml(cardNumber(card))}</span></div>
-                    <h2 class="font-playfair text-4xl md:text-5xl leading-tight">${escapeHtml(card.nome)}</h2>
+                    <div class="flex flex-wrap items-center gap-3 mb-3"><span class="element-pill element-${cls}">${escapeHtml(card.elemento)}</span><span translate="no" class="text-sm opacity-75">${escapeHtml(card.naipe)} • ${escapeHtml(cardNumber(card))}</span></div>
+                    <h2 translate="no" class="font-playfair text-4xl md:text-5xl leading-tight">${escapeHtml(card.nome)}</h2>
                 </div>
                 ${detailSection(t('detail_keywords'), `<p class="italic">${joinList(card.palavras_chave)}.</p>`)}
                 ${detailSection(t('detail_reversed'), `<p class="italic">${joinList(card.palavras_chave_invertido)}.</p>`)}
@@ -347,6 +384,7 @@
     }
 
     function drawCards(count) {
+        window.PocketAccessibility?.stop();
         cancelDrawTimers();
         drawButton.disabled = true;
         drawThreeButton.disabled = true;
@@ -514,6 +552,7 @@
                 const name = document.createElement('h3');
                 name.className = 'font-playfair text-2xl';
                 name.textContent = item.carta || '';
+                name.setAttribute('translate', 'no');
 
                 const interpretation = document.createElement('p');
                 interpretation.className = 'ai-reading-text';
@@ -544,6 +583,18 @@
         disclaimer.textContent = t('disclaimer');
         aiReadingContent.appendChild(disclaimer);
 
+        // Attribution is controlled by the backend response, never by the
+        // generated interpretation. Only recognize the actual known model IDs.
+        const modelLabels = {
+            '@cf/google/gemma-4-26b-a4b-it': 'Gemma 4 26B A4B (Google)',
+            '@cf/meta/llama-3.3-70b-instruct-fp8-fast': 'Llama 3.3 70B (Meta)'
+        };
+        const modelCredit = document.createElement('p');
+        modelCredit.className = 'ai-reading-model-credit';
+        modelCredit.textContent = t('reading_model_credit') + ' ' +
+            (modelLabels[data.model] || t('reading_model_unknown')) + '.';
+        aiReadingContent.appendChild(modelCredit);
+
         const narrationRow = document.createElement('div');
         narrationRow.className = 'ai-reading-narration';
 
@@ -555,6 +606,10 @@
 
         if (data.narrationToken) {
             narrationRow.appendChild(narrationButton);
+            const narrationCredit = document.createElement('p');
+            narrationCredit.className = 'ai-reading-provider-credit';
+            narrationCredit.textContent = t('narration_provider_credit');
+            narrationRow.appendChild(narrationCredit);
             aiReadingContent.appendChild(narrationRow);
         }
 
@@ -564,6 +619,7 @@
 
     async function narrateReading(button, row) {
         if (narrationInFlight || !lastReading?.narrationToken) return;
+        window.PocketAccessibility?.stop();
 
         narrationInFlight = true;
         const requestId = ++narrationRequestId;
@@ -616,6 +672,7 @@
 
     async function requestAiReading() {
         if (aiRequestInFlight || !currentDrawRevealed || currentDraw.length === 0) return;
+        window.PocketAccessibility?.stop();
 
         if (!questionInput.value.trim()) {
             questionInput.focus();
