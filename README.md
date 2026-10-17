@@ -21,7 +21,7 @@ Rider-Waite card images are public domain, obtained from a collection based on t
 - **Static PWA** — no build step, no framework, no bundler
 - **Cloudflare Worker** (`pocket-tarot-ai`, `cloudflare-worker.js`) at `https://api.jrpasolini.tech` as the AI backend
 - **Cloudflare Workers AI** for the readings — an **open-weight** model
-- Deployed on **GitHub Pages**
+- Deployed as a static site on **Render** at **https://jrpasolini.tech** (custom `.tech` domain), with a **GitHub Pages** mirror
 
 ## How it works
 
