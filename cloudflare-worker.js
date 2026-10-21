@@ -573,7 +573,7 @@ async function narrate(request, env, origin, requestId = newRequestId()) {
     {
       method: 'POST',
       headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json', Accept: 'audio/mpeg' },
-      signal: AbortSignal.timeout(25_000),
+      signal: AbortSignal.timeout(45_000),
       body: JSON.stringify({
         text,
         language_code: idioma,
