@@ -21,6 +21,12 @@ REPO_ROOT="$(pwd)"
 OUT="dist"
 APP_SUBPATH="pocket-oracle"
 PAGINA_REPO="https://github.com/jrpasolini/paginapessoal.git"
+# PAGINA_REF fixa o commit da página pessoal usado no build.
+# `main` acompanha o repositório; um SHA congela uma versão conhecida.
+# 25/10/2026: `main` (0ddb6d3) quebra em runtime com "Cannot access 'r' before
+# initialization" — o merge do grafo semântico (efc25f8) editou à mão o bundle
+# minificado. Fixado em 32b4622, o último commit que renderiza, até a correção.
+PAGINA_REF="${PAGINA_REF:-32b4622abeec0d374f1bcce96d55b6e11eea30c7}"
 PAGINA_BASEPATH="/paginapessoal/"
 
 # 0. Segurança: nunca escrever sobre os arquivos do app.
@@ -39,8 +45,9 @@ if [ -n "${PAGINA_PESSOAL_DIR:-}" ]; then
   echo "Página pessoal: usando cópia local em $PAGINA_SRC"
 else
   PAGINA_SRC="$(mktemp -d)"
-  echo "Página pessoal: clonando $PAGINA_REPO"
-  git clone --depth 1 "$PAGINA_REPO" "$PAGINA_SRC" >/dev/null 2>&1
+  echo "Página pessoal: clonando $PAGINA_REPO em $PAGINA_REF"
+  git clone --quiet "$PAGINA_REPO" "$PAGINA_SRC"
+  git -C "$PAGINA_SRC" checkout --quiet "$PAGINA_REF"
 fi
 
 if [ ! -f "$PAGINA_SRC/index.html" ]; then
