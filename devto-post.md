@@ -34,7 +34,7 @@ These are still **hypotheses**. Pocket Oracle has no payment system, no paying c
 
 **[Try Pocket Oracle on jrpasolini.tech](https://jrpasolini.tech/pocket-oracle/)**
 
-Alternative front-end deployments: [Render](https://pocket-oracle-0saq.onrender.com/) · [GitHub Pages](https://jrpasolini.github.io/pocket-oracle/)
+Alternative front-end deployment: [Render](https://pocket-oracle-0saq.onrender.com/pocket-oracle/)
 
 To try the complete experience:
 
@@ -61,7 +61,6 @@ I deliberately used plain HTML, CSS, JavaScript, and a service worker rather tha
 ```text
 Browser / installable PWA
   served from jrpasolini.tech/pocket-oracle/ (.tech domain) via Render
-  GitHub Pages mirror available
   | question + card names + spread + interface language
   v
 Cloudflare Worker: POST /interpretar
@@ -82,7 +81,7 @@ Browser renders the reading
        -> ElevenLabs -> audio
 ```
 
-The public front end is a static site served from `jrpasolini.tech/pocket-oracle/` through **Render**, with a **GitHub Pages** mirror; the Worker is the only server-side component. The browser sends card **names**, not authoritative card meanings. The Worker resolves them against its own canonical 78-card dataset. That prevents a modified browser payload from quietly replacing reference descriptions used in the model prompt.
+The public front end is a static site served from `jrpasolini.tech/pocket-oracle/` through **Render**; the Worker is the only server-side component. The browser sends card **names**, not authoritative card meanings. The Worker resolves them against its own canonical 78-card dataset. That prevents a modified browser payload from quietly replacing reference descriptions used in the model prompt.
 
 The interpretation response follows a defined JSON structure: title, opening, card interpretation, answer, guidance, and a synthesis for three-card spreads. Invalid or inconsistent output is rejected; the selected cards and positions are restored from validated data, not blindly trusted from the model's prose.
 
