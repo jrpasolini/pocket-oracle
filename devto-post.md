@@ -14,7 +14,7 @@ Fixing that taught me more about shipping a useful AI product than getting the f
 
 ## What I Built
 
-**[Pocket Oracle](https://jrpasolini.tech/)** is an installable, bilingual Rider–Waite tarot grimoire with an AI-assisted reading workflow.
+**[Pocket Oracle](https://jrpasolini.tech/pocket-oracle/)** is an installable, bilingual Rider–Waite tarot grimoire with an AI-assisted reading workflow.
 
 The browser experience includes the complete **78-card deck**, searchable card meanings and symbolism, individual correspondences, and one-card or three-card **Past / Present / Future** spreads. After drawing, a visitor can ask a question and request a structured interpretation from an open-weight language model. An optional ElevenLabs action narrates the generated reading.
 
@@ -32,7 +32,7 @@ These are still **hypotheses**. Pocket Oracle has no payment system, no paying c
 
 ## Demo
 
-**[Try Pocket Oracle on jrpasolini.tech](https://jrpasolini.tech/)**
+**[Try Pocket Oracle on jrpasolini.tech](https://jrpasolini.tech/pocket-oracle/)**
 
 Alternative front-end deployments: [Render](https://pocket-oracle-0saq.onrender.com/) · [GitHub Pages](https://jrpasolini.github.io/pocket-oracle/)
 
@@ -60,7 +60,7 @@ I deliberately used plain HTML, CSS, JavaScript, and a service worker rather tha
 
 ```text
 Browser / installable PWA
-  served from jrpasolini.tech (.tech domain) via Render
+  served from jrpasolini.tech/pocket-oracle/ (.tech domain) via Render
   GitHub Pages mirror available
   | question + card names + spread + interface language
   v
@@ -82,7 +82,7 @@ Browser renders the reading
        -> ElevenLabs -> audio
 ```
 
-The public front end is a static site served from `jrpasolini.tech` through **Render**, with a **GitHub Pages** mirror; the Worker is the only server-side component. The browser sends card **names**, not authoritative card meanings. The Worker resolves them against its own canonical 78-card dataset. That prevents a modified browser payload from quietly replacing reference descriptions used in the model prompt.
+The public front end is a static site served from `jrpasolini.tech/pocket-oracle/` through **Render**, with a **GitHub Pages** mirror; the Worker is the only server-side component. The browser sends card **names**, not authoritative card meanings. The Worker resolves them against its own canonical 78-card dataset. That prevents a modified browser payload from quietly replacing reference descriptions used in the model prompt.
 
 The interpretation response follows a defined JSON structure: title, opening, card interpretation, answer, guidance, and a synthesis for three-card spreads. Invalid or inconsistent output is rejected; the selected cards and positions are restored from validated data, not blindly trusted from the model's prose.
 
@@ -219,7 +219,7 @@ I am submitting Pocket Oracle for the following **Week 2 partner categories**, e
 - **Best Use of Gemma** — Gemma 4 26B A4B is the preferred model driving the core reading workflow, with measured responses, output validation, and observable fallback.
 - **Best Use of ElevenLabs** — opt-in reading narration, protected behind a server-side API and signed authorization.
 - **Best Use of Render** — an alternate deployed frontend for the app.
-- **Best Use of a .tech Domain** — [jrpasolini.tech](https://jrpasolini.tech/) is the project's public custom domain, registered using the Hacktoberfest first-year promotional offer.
+- **Best Use of a .tech Domain** — [jrpasolini.tech/pocket-oracle/](https://jrpasolini.tech/pocket-oracle/) is the project's public custom domain, registered using the Hacktoberfest first-year promotional offer.
 
 The project also enters the overall **Week 2: Side Hustle** challenge.
 
