@@ -23,10 +23,10 @@ APP_SUBPATH="pocket-oracle"
 PAGINA_REPO="https://github.com/jrpasolini/paginapessoal.git"
 # PAGINA_REF fixa o commit da página pessoal usado no build.
 # `main` acompanha o repositório; um SHA congela uma versão conhecida.
-# 25/10/2026: `main` (0ddb6d3) quebra em runtime com "Cannot access 'r' before
-# initialization" — o merge do grafo semântico (efc25f8) editou à mão o bundle
-# minificado. Fixado em 32b4622, o último commit que renderiza, até a correção.
-PAGINA_REF="${PAGINA_REF:-32b4622abeec0d374f1bcce96d55b6e11eea30c7}"
+# 26/10/2026: o grafo semântico foi revertido (não se sustentava na estrutura
+# atual) e a `main` voltou a ser idêntica ao último commit publicado. O pin
+# em 32b4622 deixou de ser necessário.
+PAGINA_REF="${PAGINA_REF:-main}"
 PAGINA_BASEPATH="/paginapessoal/"
 
 # 0. Segurança: nunca escrever sobre os arquivos do app.
