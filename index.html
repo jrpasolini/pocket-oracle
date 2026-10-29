@@ -3,6 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Keeps css/, js/, images/ and icons/ under /pocket-oracle/ when the URL has no trailing slash.
+         Outside that path the tag is removed so a repo-root preview still uses document-relative URLs.
+         GitHub Pages is not a deploy target. -->
+    <base href="/pocket-oracle/">
+    <script>
+        (function () {
+            var path = location.pathname;
+            if (path === '/pocket-oracle' || path.indexOf('/pocket-oracle/') === 0) return;
+            var base = document.querySelector('base');
+            if (base) base.remove();
+        })();
+    </script>
     <meta name="theme-color" content="#6b3f2a">
     <meta name="description" content="Pocket Oracle: bilingual Rider-Waite Tarot with AI readings by Gemma and narration by ElevenLabs.">
     <title>Pocket Oracle — Rider-Waite Tarot</title>
@@ -81,6 +93,17 @@
                     </svg>
                 </button>
             </div>
+            <script>
+                (function () {
+                    // <base> retargets "#id" at /pocket-oracle/ (a real navigation from
+                    // /pocket-oracle or /pocket-oracle/index.html). Pin fragments to this document.
+                    if (!document.querySelector('base')) return;
+                    var here = location.pathname + location.search;
+                    document.querySelectorAll('a[href^="#"], use[href^="#"]').forEach(function (node) {
+                        node.setAttribute('href', here + node.getAttribute('href'));
+                    });
+                })();
+            </script>
             <div class="accessibility-controls" role="group" aria-label="Display and speech" data-i18n-aria="accessibility_controls">
                 <button id="theme-toggle" type="button" class="accessibility-toggle" aria-pressed="false" aria-label="Switch to dark theme" title="Switch to dark theme">
                     <span aria-hidden="true">☾</span>
